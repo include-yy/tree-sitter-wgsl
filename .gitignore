@@ -8,3 +8,4 @@ build
 /scanner.obj
 target
 Cargo.lock
+package-lock.json

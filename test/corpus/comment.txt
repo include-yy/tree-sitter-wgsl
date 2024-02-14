@@ -1,0 +1,50 @@
+=======
+line comments
+=======
+
+// 1 2 3 4 5 6
+// 1 1 4 5 1 4
+// 1 2 // 3 4 // 5 6
+/// 114514 191981
+// hello /*nihao*/ /***/****
+
+-------
+
+(translation_unit
+ (line_comment)
+ (line_comment)
+ (line_comment)
+ (line_comment)
+ (line_comment))
+
+=======
+block comments
+=======
+
+/* a b c */
+
+/* a b c /*
+d e f */ g h i */
+
+/* wo ni ta
+// line start here */
+
+/* aaaaaaaaaaaaaaaa /* bbbbbbbbbbbbbbbb /* cccccccccc
+*/*/*/
+
+/*
+I am who am I
+// */
+
+///*
+// */
+
+---------
+
+(translation_unit
+ (block_comment)
+ (block_comment)
+ (block_comment)
+ (block_comment)
+ (block_comment)
+ (line_comment) (line_comment))

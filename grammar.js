@@ -1,3 +1,9 @@
+/*
+ * @file WGSL grammar for tree-sitter
+ * @author include-yy yy@egh0bww1.com
+ * @license MIT
+ */
+
 const PREC = {
     LOGICAL_OR: 1,
     LOGICAL_AND: 2,
@@ -19,12 +25,12 @@ module.exports = grammar({
     word: $ => $.identifier,
 
     externals: $ => [
-	$._block_comment,
+	$.block_comment,
     ],
 
     extras: $ => [
-	$._comment,
-	$._block_comment,
+	$.line_comment,
+	$.block_comment,
 	$._blankspace,
     ],
 
@@ -58,6 +64,9 @@ module.exports = grammar({
 	    $.identifier,
 	    seq($.identifier, ".", $.identifier),
 	),
+	// $3.3
+	line_comment: $ => token(seq('//', /.*/)),
+	comment: $ => choice($.line_comment, $.block_comment),
 	// $3.5
 	literal: $ => choice(
 	    $.int_literal,
@@ -507,7 +516,7 @@ module.exports = grammar({
 	    token(/[xyzw][xyzw][xyzw][xyzw]/),
 	),
 	// something else here
-	_comment: $ => seq(token('//'), token(/.*/)),
+
         _blankspace: $ => token(/[\u0020\u0009\u000a\u000b\u000c\u000d\u0085\u200e\u200f\u2028\u2029]/)
     }
 })

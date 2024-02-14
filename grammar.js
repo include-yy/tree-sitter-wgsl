@@ -92,7 +92,12 @@ module.exports = grammar({
             /0[xX][0-9a-fA-F]+[pP][+-]?[0-9]+[fh]?/,
         )),
 	// $3.7
-	identifier: $ => /([_\p{XID_Start}][\p{XID_Continue}]+)|([\p{XID_Start}])/,
+	//identifier: $ => /([_\p{XID_Start}][\p{XID_Continue}]+)|([\p{XID_Start}])/,
+	//identifier rules from szebmopl's impl
+	//https://github.com/szebniok/tree-sitter-wgsl/blob/master/grammar.js
+	//Just support alphabet and digit can significantly reduce the size of parser.c
+	//(approximately 175 KB less) and speed up the generation process
+	identifier: $ => /([a-zA-Z_][0-9a-zA-Z][0-9a-zA-Z_]*)|([a-zA-Z][0-9a-zA-Z_]*)/,
 	// $3.10
 	template_list: $ => seq(
 	    '<',

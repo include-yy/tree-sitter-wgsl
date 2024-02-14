@@ -1,0 +1,30 @@
+{
+  "name": "tree-sitter-wgsl",
+  "version": "0.1.0",
+  "description": "WGSL grammar for node-tree-sitter",
+  "main": "bindings/node",
+  "scripts": {
+    "test": "tree-sitter test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/include-yy/tree-sitter-wgsl.git"
+  },
+  "keywords": [
+    "parser",
+    "lexer",
+    "wgsl"
+  ],
+  "author": "include-yy",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/include-yy/tree-sitter-wgsl/issues"
+  },
+  "homepage": "https://github.com/include-yy/tree-sitter-wgsl#readme",
+  "dependencies": {
+    "nan": "^2.18.0"
+  },
+  "devDependencies": {
+    "tree-sitter-cli": "^0.21.0-pre-release-1"
+  }
+}

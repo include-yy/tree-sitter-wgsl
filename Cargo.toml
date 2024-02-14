@@ -1,10 +1,10 @@
 [package]
 name = "tree-sitter-wgsl"
 description = "wgsl grammar for the tree-sitter parsing library"
-version = "0.0.1"
+version = "0.1.0"
 keywords = ["incremental", "parsing", "wgsl"]
 categories = ["parsing", "text-editors"]
-repository = "https://github.com/tree-sitter/tree-sitter-wgsl"
+repository = "https://github.com/include-yy/tree-sitter-wgsl"
 edition = "2018"
 license = "MIT"
 

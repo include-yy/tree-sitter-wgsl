@@ -1,0 +1,72 @@
+=======
+bool literal
+=======
+
+const a = true;
+const a = false;
+-------
+
+(translation_unit
+ (global_value_decl (identifier) (bool_literal))
+ (global_value_decl (identifier) (bool_literal)))
+
+===========
+int literal
+===========
+
+const a = 0;
+const a = 0i;
+const a = 0u;
+const a = 114514;
+const a = 1919810;
+const a = 142857;
+const a = 0xc0ffeei;
+const a = 0XC0FFEEu;
+const a = 0x0114514;
+
+-------
+
+(translation_unit
+ (global_value_decl (identifier) (int_literal))
+ (global_value_decl (identifier) (int_literal))
+ (global_value_decl (identifier) (int_literal))
+ (global_value_decl (identifier) (int_literal))
+ (global_value_decl (identifier) (int_literal))
+ (global_value_decl (identifier) (int_literal))
+ (global_value_decl (identifier) (int_literal))
+ (global_value_decl (identifier) (int_literal))
+ (global_value_decl (identifier) (int_literal)))
+
+=============
+float literal
+=============
+
+const a = 0.e+4f;
+const b = 01.;
+const c = .01;
+const d = 12.34;
+const f = .0f;
+const g = 0h;
+const h = 1e-3;
+const a = 0xa.fp+2;
+const b = 0x1P+4f;
+const c = 0X.3;
+const d = 0x3p+2h;
+const e = 0X1.fp-4;
+const f = 0x3.2p+2h;
+-------------
+
+(translation_unit
+ (global_value_decl (identifier) (float_literal))
+ (global_value_decl (identifier) (float_literal))
+ (global_value_decl (identifier) (float_literal))
+ (global_value_decl (identifier) (float_literal))
+ (global_value_decl (identifier) (float_literal))
+ (global_value_decl (identifier) (float_literal))
+ (global_value_decl (identifier) (float_literal))
+ (global_value_decl (identifier) (float_literal))
+ (global_value_decl (identifier) (float_literal))
+ (global_value_decl (identifier) (float_literal))
+ (global_value_decl (identifier) (float_literal))
+ (global_value_decl (identifier) (float_literal))
+ (global_value_decl (identifier) (float_literal)))

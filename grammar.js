@@ -36,7 +36,7 @@ module.exports = grammar({
     ],
 
     inline: $ => [
-	$.global_decl,
+	$._literal,
 	$._reserved,
     ],
 
@@ -49,62 +49,49 @@ module.exports = grammar({
 	// $2
 	translation_unit: $ => seq(
 	    repeat($.global_directive),
-	    repeat($.global_decl),
+	    repeat($._global_decl),
 	),
-	global_decl: $ => choice(
-	    ";",
-	    seq($.global_variable_decl, ";"),
-	    seq($.global_value_decl, ";"),
-	    seq($.type_alias_decl, ";"),
+	_global_decl: $ => choice(
+	    ';',
+	    seq($.global_variable_decl, ';'),
+	    seq($.global_value_decl, ';'),
+	    seq($.type_alias_decl, ';'),
 	    $.struct_decl,
 	    $.function_decl,
-	    seq($.const_assert_statement, ";"),
+	    seq($.const_assert_statement, ';'),
 	),
 	// $2.3
 	diagnostic_rule_name: $ => choice(
 	    $.identifier,
-	    seq($.identifier, ".", $.identifier),
+	    seq($.identifier, '.', $.identifier),
 	),
 	// $3.3
 	line_comment: $ => token(seq('//', /.*/)),
 	comment: $ => choice($.line_comment, $.block_comment),
 	// $3.5
-	literal: $ => choice(
+	_literal: $ => choice(
 	    $.int_literal,
 	    $.float_literal,
 	    $.bool_literal,
 	),
 	// $3.5.1
-	bool_literal: $ => choice(
-	    "true",
-	    "false",
-	),
+	bool_literal: $ => choice('true', 'false'),
 	// $3.5.2
-	int_literal: $ => choice(
-	    $._decimal_int_literal,
-	    $._hex_int_literal,
-	),
-	_decimal_int_literal: $ => choice(
-	    token(/0[iu]?/),
-	    token(/[1-9][0-9]*[iu]?/),
-	),
-	_hex_int_literal: $ => token(/0[xX][0-9a-fA-F]+[iu]?/),
-	float_literal: $ => choice(
-	    $._decimal_float_literal,
-	    $._hex_float_literal,
-	),
-	_decimal_float_literal: $ => choice(
-	    token(/0[fh]/),
-	    token(/[1-9][0-9]*[fh]/),
-	    token(/[0-9]*\.[0-9]+([eE][+-]?[0-9]+)?[fh]?/),
-            token(/[0-9]+\.[0-9]*([eE][+-]?[0-9]+)?[fh]?/),
-            token(/[0-9]+[eE][+-]?[0-9]+[fh]?/),
-	),
-	_hex_float_literal: $ => choice(
-            token(/0[xX][0-9a-fA-F]*\.[0-9a-fA-F]+([pP][+-]?[0-9]+[fh]?)?/),
-            token(/0[xX][0-9a-fA-F]+\.[0-9a-fA-F]*([pP][+-]?[0-9]+[fh]?)?/),
-            token(/0[xX][0-9a-fA-F]+[pP][+-]?[0-9]+[fh]?/),
-        ),
+	int_literal: $ => token(choice(
+	    /0[iu]?/,
+	    /[1-9][0-9]*[iu]?/,
+	    /0[xX][0-9a-fA-F]+[iu]?/,
+	)),
+	float_literal: $ => token(choice(
+	    /0[fh]/,
+	    /[1-9][0-9]*[fh]/,
+	    /[0-9]*\.[0-9]+([eE][+-]?[0-9]+)?[fh]?/,
+            /[0-9]+\.[0-9]*([eE][+-]?[0-9]+)?[fh]?/,
+            /[0-9]+[eE][+-]?[0-9]+[fh]?/,
+            /0[xX][0-9a-fA-F]*\.[0-9a-fA-F]+([pP][+-]?[0-9]+[fh]?)?/,
+            /0[xX][0-9a-fA-F]+\.[0-9a-fA-F]*([pP][+-]?[0-9]+[fh]?)?/,
+            /0[xX][0-9a-fA-F]+[pP][+-]?[0-9]+[fh]?/,
+        )),
 	// $3.7
 	//ident: $ => $.ident_pattern_token,
 	//member_ident: $ => $.ident_pattern_token,
@@ -169,15 +156,15 @@ module.exports = grammar({
 	variable_or_value_statement: $ => choice(
 	    $.variable_decl,
 	    seq($.variable_decl, "=", $._expression),
-	    seq("let", $.optionally_typed_ident, "=", $._expression),
-	    seq("const", $.optionally_typed_ident, "=", $._expression),
+	    seq("let", $._optionally_typed_ident, "=", $._expression),
+	    seq("const", $._optionally_typed_ident, "=", $._expression),
 	),
 	variable_decl: $ => seq(
 	    "var",
 	    optional($.template_list),
-	    $.optionally_typed_ident,
+	    $._optionally_typed_ident,
 	),
-	optionally_typed_ident: $ =>
+	_optionally_typed_ident: $ =>
 	    seq($.identifier, optional(seq(":", $.type_specifier))),
 	global_variable_decl: $ => seq(
 	    repeat($.attribute),
@@ -185,16 +172,16 @@ module.exports = grammar({
 	    optional(seq("=", $._expression)),
 	),
 	global_value_decl: $ => choice(
-	    seq("const", $.optionally_typed_ident, "=", $._expression),
+	    seq("const", $._optionally_typed_ident, "=", $._expression),
 	    seq(repeat($.attribute),
 		"override",
-		$.optionally_typed_ident,
+		$._optionally_typed_ident,
 		optional(seq("=", $._expression))),
 	),
 	// $8.18
 	_expression: $ => choice(
 	    $.binary_expression,
-	    $.literal,
+	    $._literal,
 	    $.identifier,
 	    $.template_elaborated_ident,
 	    $.call_expression,
@@ -228,7 +215,7 @@ module.exports = grammar({
 	    choice(
 		$.template_elaborated_ident,
 		$.call_expression,
-		$.literal,
+		$._literal,
 		$.paren_expression,
 	    ),
 	    $.component_or_swizzle_specifier,

@@ -31,7 +31,8 @@ module.exports = grammar({
     extras: $ => [
 	$.line_comment,
 	$.block_comment,
-	$._blankspace,
+	// $3.2
+	/[\u0020\u0009\u000a\u000b\u000c\u000d\u0085\u200e\u200f\u2028\u2029]/,
     ],
 
     inline: $ => [
@@ -515,9 +516,6 @@ module.exports = grammar({
 	    token(/[xyzw][xyzw][xyzw]/),
 	    token(/[xyzw][xyzw][xyzw][xyzw]/),
 	),
-	// something else here
-
-        _blankspace: $ => token(/[\u0020\u0009\u000a\u000b\u000c\u000d\u0085\u200e\u200f\u2028\u2029]/)
     }
 })
 

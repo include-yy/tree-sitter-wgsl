@@ -37,7 +37,6 @@ module.exports = grammar({
 
     inline: $ => [
 	$._literal,
-	$._reserved,
     ],
 
     conflicts: $ => [
@@ -93,14 +92,7 @@ module.exports = grammar({
             /0[xX][0-9a-fA-F]+[pP][+-]?[0-9]+[fh]?/,
         )),
 	// $3.7
-	//ident: $ => $.ident_pattern_token,
-	//member_ident: $ => $.ident_pattern_token,
-	//ident_pattern_token: $ =>
-	//token(/([_\p{XID_Start}][\p{XID_Continue}]+)|([\p{XID_Start}])/uy),
-	identifier: $ =>
-	    token(/([_\p{XID_Start}][\p{XID_Continue}]+)|([\p{XID_Start}])/),
-	// $3.9
-	//diagnostic_name_token: $ => $.ident_pattern_token,
+	identifier: $ => /([_\p{XID_Start}][\p{XID_Continue}]+)|([\p{XID_Start}])/,
 	// $3.10
 	template_list: $ => seq(
 	    '<',
@@ -444,51 +436,6 @@ module.exports = grammar({
 	    "(", $.severity_control_name, ",",
 	    $.diagnostic_rule_name, $._attrib_end,
 	),
-	//$15.2
-	// create with regexp replace:
-	// M-x query-replace-regexp | `'\([a-zA-Z_]+\)'`$ -> token('\1'),
-	// totol number is 145
-	_reserved: $ => choice(
-	    token('NULL'), token('Self'), token('abstract'), token('active'),
-	    token('alignas'), token('alignof'), token('as'), token('asm'),
-	    token('asm_fragment'), token('async'), token('attribute'),
-	    token('auto'), token('await'), token('become'), token('binding_array'),
-	    token('cast'), token('catch'), token('class'), token('co_await'),
-	    token('co_return'), token('co_yield'), token('coherent'),
-	    token('column_major'), token('common'), token('compile'),
-	    token('compile_fragment'), token('concept'), token('const_cast'),
-	    token('consteval'), token('constexpr'), token('constinit'),
-	    token('crate'), token('debugger'), token('decltype'), token('delete'),
-	    token('demote'), token('demote_to_helper'), token('do'),
-	    token('dynamic_cast'), token('enum'), token('explicit'),
-	    token('export'), token('extends'), token('extern'), token('external'),
-	    token('fallthrough'), token('filter'), token('final'), token('finally'),
-	    token('friend'), token('from'), token('fxgroup'), token('get'),
-	    token('goto'), token('groupshared'), token('highp'), token('impl'),
-	    token('implements'), token('import'), token('inline'), token('instanceof'),
-	    token('interface'), token('layout'), token('lowp'), token('macro'),
-	    token('macro_rules'), token('match'), token('mediump'), token('meta'),
-	    token('mod'), token('module'), token('move'), token('mut'), token('mutable'),
-	    token('namespace'), token('new'), token('nil'), token('noexcept'),
-	    token('noinline'), token('nointerpolation'), token('noperspective'),
-	    token('null'), token('nullptr'), token('of'), token('operator'),
-	    token('package'), token('packoffset'), token('partition'), token('pass'),
-	    token('patch'), token('pixelfragment'), token('precise'), token('precision'),
-	    token('premerge'), token('priv'), token('protected'), token('pub'),
-	    token('public'), token('readonly'), token('ref'), token('regardless'),
-	    token('register'), token('reinterpret_cast'), token('require'),
-	    token('resource'), token('restrict'), token('self'), token('set'),
-	    token('shared'), token('sizeof'), token('smooth'), token('snorm'),
-	    token('static'), token('static_assert'), token('static_cast'), token('std'),
-	    token('subroutine'), token('super'), token('target'), token('template'),
-	    token('this'), token('thread_local'), token('throw'), token('trait'),
-	    token('try'), token('type'), token('typedef'), token('typeid'),
-	    token('typename'), token('typeof'), token('union'), token('unless'),
-	    token('unorm'), token('unsafe'), token('unsized'), token('use'),
-	    token('using'), token('varying'), token('virtual'), token('volatile'),
-	    token('wgsl'), token('where'), token('with'), token('writeonly'),
-	    token('yield'),
-        ),
 	//$15.4
 	severity_control_name: $ => choice(
 	    "error", "warning", "info", "off",

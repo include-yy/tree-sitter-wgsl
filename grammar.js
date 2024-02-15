@@ -249,33 +249,32 @@ module.exports = grammar({
 	//$9.1
 	compound_statement: $ => seq(
 	    repeat($.attribute),
-	    "{",
+	    '{',
 	    repeat($._statement),
-	    "}",
+	    '}',
 	),
 	//$9.2
 	assignment_statement: $ => choice(
             seq(
-		field("left", $.lhs_expression),
-		choice("=", $.compound_assignment_operator),
-		field("right", $._expression)
+		field('left', $.lhs_expression),
+		token(choice(
+		    '=', '+=', '-=', '*=',
+		    '/=', '%=', '&=', '|=',
+		    '^=', '<<=', '>>=')),
+		field('right', $._expression),
 	    ),
-	    seq(field("left", "_"), "=", field("right", $._expression)),
+	    seq(field('left', '_'), '=', field('right', $._expression)),
         ),
-	//$9.2.3
-	compound_assignment_operator: $ => choice(
-	    "+=", "-=", "*=", "/=", "%=", "&=", "|=", "^=", "<<=", ">>="
-	),
 	//$9.3
-	increment_statement: $ => seq($.lhs_expression, "++"),
-        decrement_statement: $ => seq($.lhs_expression, "--"),
+	increment_statement: $ => seq($.lhs_expression, '++'),
+        decrement_statement: $ => seq($.lhs_expression, '--'),
 	//$9.4.1
 	if_statement: $ => seq(
 	    repeat($.attribute),
-	    "if",
-	    field("condition", $._expression),
-	    field("consequence", $.compound_statement),
-	    optional(seq("else", field("alternative", $.else_statement))),
+	    'if',
+	    field('condition', $._expression),
+	    field('consequence', $.compound_statement),
+	    optional(seq('else', field('alternative', $.else_statement))),
 	),
 	else_statement: $ => choice(
 	    $.compound_statement,
@@ -284,102 +283,93 @@ module.exports = grammar({
 	//$9.4.2
 	switch_statement: $ => seq(
 	    repeat($.attribute),
-	    "switch",
+	    'switch',
 	    $._expression,
-	    $._switch_body,
-	),
-        _switch_body: $ => seq(
 	    repeat($.attribute),
-	    "{",
+	    '{',
 	    repeat1($.switch_clause),
-	    "}",
-        ),
-	switch_clause: $ => choice(
-	    $.case_clause,
-	    $.default_alone_clause,
+	    '}',
 	),
-	case_clause: $ =>
-	    seq("case", $.case_selectors, optional(":"), $.compound_statement),
-	default_alone_clause: $ =>
-	    seq("default", optional(":"), $.compound_statement),
-	case_selectors: $ => commaSep1(choice("default", $._expression)),
+	switch_clause: $ => choice(
+	    seq('case', $.case_selectors, optional(':'), $.compound_statement),
+	    seq('default', optional(':'), $.compound_statement),
+	),
+	case_selectors: $ => commaSep1(choice('default', $._expression)),
 	//$9.4.3
 	loop_statement: $ => seq(
 	    repeat($.attribute),
-	    "loop",
+	    'loop',
 	    repeat($.attribute),
-	    "{",
+	    '{',
 	    repeat($._statement),
 	    optional($.continuing_statement),
-	    "}",
+	    '}',
 	),
 	//$9.4.4
 	for_statement: $ => seq(
 	    repeat($.attribute),
-	    "for", "(", $.for_header, ")",
+	    'for', '(', $.for_header, ')',
 	    $.compound_statement,
 	),
         for_header: $ => seq(
-	    optional($.for_init),
-	    ";",
+	    optional(choice(
+		$._variable_or_value_statement,
+		$._variable_updating_statement,
+		$.func_call_statement,
+	    )),
+	    ';',
 	    optional($._expression),
-	    ";",
-	    optional($.for_update),
+	    ';',
+	    optional(choice(
+		$._variable_updating_statement,
+		$.func_call_statement,
+	    )),
 	),
-        for_init: $ => choice(
-	    $._variable_or_value_statement,
-	    $.variable_updating_statement,
-	    $.func_call_statement,
-        ),
-        for_update: $ => choice(
-	    $.variable_updating_statement,
-	    $.func_call_statement,
-        ),
 	//$9.4.5
 	while_statement: $ => seq(
 	    repeat($.attribute),
-	    "while", field("condition", $._expression), $.compound_statement,
+	    'while', field('condition', $._expression), $.compound_statement,
 	),
 	//$9.4.6
-	break_statement: $ => "break",
+	break_statement: $ => 'break',
 	//$9.4.7
-        break_if_statement: $ => seq("break", "if", $._expression, ";"),
+        break_if_statement: $ => seq('break', 'if', $._expression, ';'),
 	//$9.4.8
-	continue_statement: $ => "continue",
+	continue_statement: $ => 'continue',
 	//$9.4.9
-	continuing_statement: $ => seq("continuing", $.continuing_compound_statement),
+	continuing_statement: $ => seq('continuing', $.continuing_compound_statement),
         continuing_compound_statement: $ => seq(
 	    repeat($.attribute),
-	    "{",
+	    '{',
 	    repeat($._statement),
 	    optional($.break_if_statement),
-	    "}",
+	    '}',
 	),
 	//$9.4.10
-	return_statement: $ => seq("return", optional($._expression)),
+	return_statement: $ => seq('return', optional($._expression)),
 	//$9.5
         func_call_statement: $ => $.call_expression,
 	//$9.6
-	const_assert_statement: $ => seq("const_assert", $._expression),
+	const_assert_statement: $ => seq('const_assert', $._expression),
 	//$9.7
 	_statement: $ => choice(
-	    ";",
-            seq($.return_statement, ";"),
+	    ';',
+            seq($.return_statement, ';'),
             $.if_statement,
             $.switch_statement,
             $.loop_statement,
             $.for_statement,
             $.while_statement,
-            seq($.func_call_statement, ";"),
-            seq($._variable_or_value_statement, ";"),
-            seq($.break_statement, ";"),
-            seq($.continue_statement, ";"),
-            seq("discard", ";"),
-            seq($.variable_updating_statement, ";"),
+            seq($.func_call_statement, ';'),
+            seq($._variable_or_value_statement, ';'),
+            seq($.break_statement, ';'),
+            seq($.continue_statement, ';'),
+            seq('discard', ';'),
+            seq($._variable_updating_statement, ';'),
             $.compound_statement,
-            seq($.const_assert_statement, ";"),
+            seq($.const_assert_statement, ';'),
         ),
-	variable_updating_statement: $ => choice(
+	_variable_updating_statement: $ => choice(
 	    $.assignment_statement,
 	    $.increment_statement,
 	    $.decrement_statement,
@@ -387,47 +377,47 @@ module.exports = grammar({
 	//$10.1
 	function_decl: $ => seq(
 	    repeat($.attribute),
-	    "fn",
-	    field("name", $.identifier),
-	    "(",
-	    field("parameters", optional($.param_list)),
-	    ")",
-	    field("type", optional(seq("->", repeat($.attribute),
+	    'fn',
+	    field('name', $.identifier),
+	    '(',
+	    field('parameters', optional($.param_list)),
+	    ')',
+	    field('type', optional(seq('->', repeat($.attribute),
 		$.template_elaborated_ident))),
-	    field("body", $.compound_statement),
+	    field('body', $.compound_statement),
 	),
         param_list: $ => commaSep1($.param),
 	param: $ => seq(
 	    repeat($.attribute),
-	    $.identifier, ":",
+	    $.identifier, ':',
 	    $._type_specifier,
 	),
 	//$11
 	attribute: $ => choice(
-	    seq("@", "align", "(", $._expression, $._attrib_end),
-	    seq("@", "binding", "(", $._expression, $._attrib_end),
-	    seq("@", "builtin", "(", $._expression, $._attrib_end),
-	    seq("@", "const"),
-	    seq("@", "diagnostic", $._diagnostic_control),
-	    seq("@", "group", "(", $._expression, $._attrib_end),
-	    seq("@", "id", "(", $._attrib_end),
-	    seq("@", "interpolate", "(", $._expression, $._attrib_end),
-	    seq("@", "interpolate", "(", $._expression,
-		",", $._expression, $._attrib_end),
-	    seq("@", "invariant"),
-	    seq("@", "location", "(", $._expression, $._attrib_end),
-	    seq("@", "must_use"),
-	    seq("@", "size", "(", $._expression, $._attrib_end),
-	    seq("@", "workgroup_size", "(", $._expression, $._attrib_end),
-	    seq("@", "workgroup_size", "(",
-		$._expression, ",", $._expression, $._attrib_end),
-	    seq("@", "workgroup_size", "(",
-		$._expression, ",", $._expression, ",", $._expression, $._attrib_end),
-	    seq("@", "vertex"),
-	    seq("@", "fragment"),
-	    seq("@", "compute"),
+	    seq('@', 'align', '(', $._expression, $._attrib_end),
+	    seq('@', 'binding', '(', $._expression, $._attrib_end),
+	    seq('@', 'builtin', '(', $._expression, $._attrib_end),
+	    seq('@', 'const'),
+	    seq('@', 'diagnostic', $._diagnostic_control),
+	    seq('@', 'group', '(', $._expression, $._attrib_end),
+	    seq('@', 'id', '(', $._attrib_end),
+	    seq('@', 'interpolate', '(', $._expression, $._attrib_end),
+	    seq('@', 'interpolate', '(', $._expression,
+		',', $._expression, $._attrib_end),
+	    seq('@', 'invariant'),
+	    seq('@', 'location', '(', $._expression, $._attrib_end),
+	    seq('@', 'must_use'),
+	    seq('@', 'size', '(', $._expression, $._attrib_end),
+	    seq('@', 'workgroup_size', '(', $._expression, $._attrib_end),
+	    seq('@', 'workgroup_size', '(',
+		$._expression, ',', $._expression, $._attrib_end),
+	    seq('@', 'workgroup_size', '(',
+		$._expression, ',', $._expression, ',', $._expression, $._attrib_end),
+	    seq('@', 'vertex'),
+	    seq('@', 'fragment'),
+	    seq('@', 'compute'),
 	),
-	_attrib_end: $ => token(seq(optional(","), ")")),
+	_attrib_end: $ => token(seq(optional(','), ')')),
 	_diagnostic_control: $ => seq(
 	    '(',
 	    field('level', choice('error', 'warning', 'info', 'off')),
@@ -436,16 +426,10 @@ module.exports = grammar({
 	    $._attrib_end,
 	),
 	//$15.4
-	swizzle_name: $ => choice(
-	    token(/[rgba]/),
-	    token(/[rgba][rgba]/),
-	    token(/[rgba][rgba][rgba]/),
-	    token(/[rgba][rgba][rgba][rgba]/),
-	    token(/[xyzw]/),
-	    token(/[xyzw][xyzw]/),
-	    token(/[xyzw][xyzw][xyzw]/),
-	    token(/[xyzw][xyzw][xyzw][xyzw]/),
-	),
+	swizzle_name: $ => token(choice(
+	    /[rgba]{1,4}/,
+	    /[xyzw]{1,4}/,
+	)),
     }
 })
 

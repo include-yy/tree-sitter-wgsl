@@ -1,0 +1,278 @@
+===========================
+type_alias_decl global_decl
+===========================
+
+alias a = vec4<f32>;
+alias RTArr = array<vec4<f32>>;
+alias Arr = array<i32, 5>;
+alias single = f32;
+
+----------------
+
+(translation_unit
+ (type_alias_decl
+  (identifier)
+  (template_ident
+   (identifier)
+   (template_list
+    (template_ident
+     (identifier)))))
+ (type_alias_decl
+  (identifier)
+  (template_ident
+   (identifier)
+   (template_list
+    (template_ident
+     (identifier)
+     (template_list
+      (template_ident
+       (identifier)))))))
+ (type_alias_decl
+  (identifier)
+  (template_ident
+   (identifier)
+   (template_list
+    (template_ident (identifier))
+    (int_literal))))
+ (type_alias_decl
+  (identifier)
+  (template_ident
+   (identifier))))
+
+=====================
+semicolon global_decl
+=====================
+
+;;
+;;;
+;;;;
+;;;;;
+
+-------------
+
+(translation_unit)
+
+=============================
+global_value_decl global_decl
+=============================
+
+const a = 1u;
+const b = 2.0f;
+const c = true;
+const d:bool = false;
+@id(0)    override has_point_light: bool = true;
+@id(1200) override specular_param: f32 = 2.3;
+@id(1300) override gain: f32;
+override width: f32 = 0.0;
+override depth: f32;
+override height = 2 * depth;
+
+---------------------
+
+(translation_unit
+ (global_const_decl (identifier) (int_literal))
+ (global_const_decl (identifier) (float_literal))
+ (global_const_decl (identifier) (bool_literal))
+ (global_const_decl (identifier) (template_ident (identifier)) (bool_literal))
+ (global_override_decl (attribute (int_literal))
+		       (identifier) (template_ident (identifier))
+		       (bool_literal))
+ (global_override_decl (attribute (int_literal))
+		       (identifier) (template_ident (identifier))
+		       (float_literal))
+ (global_override_decl (attribute (int_literal))
+		       (identifier) (template_ident (identifier)))
+ (global_override_decl (identifier) (template_ident (identifier)) (float_literal))
+ (global_override_decl (identifier) (template_ident (identifier)))
+ (global_override_decl (identifier) (binary_expression (int_literal) (identifier))))
+
+================================
+global_variable_decl global_decl
+================================
+
+@group(0) @binding(0)
+var<storage,read> buf1: Buffer;
+@group(0) @binding(0)
+var<storage> buf2: Buffer;
+@group(0) @binding(1)
+var<storage,read_write> buf3: Buffer;
+@group(0) @binding(2)
+var<uniform> params: ParamsTable;
+var u32_1 = 1u;
+var i32_1 = 1i;
+var f32_1 = 1f;
+var i32_from_type : i32 = 1;
+var<private> c: array<i32,8u>;
+
+-------------------------------------
+
+(translation_unit
+  (global_variable_decl
+    (attribute (int_literal))
+    (attribute (int_literal))
+    (template_list
+     (template_ident
+      (identifier))
+     (template_ident
+      (identifier)))
+    (identifier)
+    (template_ident (identifier)))
+  (global_variable_decl
+    (attribute (int_literal))
+    (attribute (int_literal))
+    (template_list
+      (template_ident
+        (identifier)))
+    (identifier)
+    (template_ident (identifier)))
+  (global_variable_decl
+    (attribute (int_literal))
+    (attribute (int_literal))
+    (template_list
+     (template_ident (identifier))
+     (template_ident (identifier)))
+    (identifier)
+    (template_ident (identifier)))
+  (global_variable_decl
+    (attribute (int_literal))
+    (attribute (int_literal))
+    (template_list
+     (template_ident (identifier)))
+    (identifier)
+    (template_ident (identifier)))
+  (global_variable_decl (identifier) (int_literal))
+  (global_variable_decl (identifier) (int_literal))
+  (global_variable_decl (identifier) (float_literal))
+  (global_variable_decl
+   (identifier) (template_ident (identifier)) (int_literal))
+  (global_variable_decl
+   (template_list (template_ident (identifier)))
+   (identifier)
+   (template_ident
+    (identifier) (template_list (template_ident (identifier))
+				(int_literal)))))
+
+==================================
+const_assert_statement global_decl
+==================================
+
+const_assert x < y;
+const_assert(y != 0);
+const_assert z > 0;
+const_assert a != 0;
+
+--------------------------
+
+(translation_unit
+ (const_assert_statement (binary_expression (identifier) (identifier)))
+ (const_assert_statement
+  (paren_expression (binary_expression (identifier) (int_literal))))
+ (const_assert_statement (binary_expression (identifier) (int_literal)))
+ (const_assert_statement (binary_expression (identifier) (int_literal))))
+
+=======================
+struct_decl global_decl
+=======================
+
+struct PointLight {
+  position : vec3f,
+  color : vec3f,
+}
+
+struct LightStorage {
+  pointCount : u32,
+  point : array<PointLight>,
+}
+
+struct Data {
+  a: i32,
+  b: vec2<f32>,
+  c: array<i32,10>, // last comma is optional
+}
+
+struct ParamsTable {@id(1) weight: f32}
+
+-------------------------------
+
+(translation_unit
+ (struct_decl
+  (identifier)
+  (struct_member (identifier) (template_ident (identifier)))
+  (struct_member (identifier) (template_ident (identifier))))
+ (struct_decl
+  (identifier)
+  (struct_member (identifier) (template_ident (identifier)))
+  (struct_member
+   (identifier)
+   (template_ident (identifier) (template_list (template_ident (identifier))))))
+ (struct_decl
+  (identifier)
+  (struct_member (identifier) (template_ident (identifier)))
+  (struct_member
+   (identifier)
+   (template_ident (identifier) (template_list (template_ident (identifier)))))
+  (struct_member
+   (identifier)
+   (template_ident (identifier)
+		   (template_list (template_ident (identifier))
+				  (int_literal))))
+  (line_comment))
+ (struct_decl
+  (identifier)
+  (struct_member (attribute (int_literal)) (identifier) (template_ident (identifier)))))
+
+=========================
+function_decl global_decl
+=========================
+
+fn add_two(i: i32, b: f32) -> i32 {}
+@fragment
+fn fragmentMain(@location(0) worldPos : vec3f,
+                @location(1) normal : vec3f,
+                @location(2) uv : vec2f) -> @location(0) vec4f {}
+fn helper() -> vec4<f32> {}
+fn halve_it(x : f<8, 7>) -> f<8, 7> {}
+fn bar() {}
+@compute @workgroup_size(8, 8)
+fn computeMain(@builtin(global_invocation_id) cell: vec3u) {}
+
+------------
+
+(translation_unit
+  (function_decl
+    (identifier)
+    (param_list
+     (param (identifier) (template_ident (identifier)))
+     (param (identifier) (template_ident (identifier))))
+    (template_ident (identifier))
+    (compound_statement))
+  (function_decl
+   (attribute)
+   (identifier)
+   (param_list
+    (param (attribute (int_literal)) (identifier) (template_ident (identifier)))
+    (param (attribute (int_literal)) (identifier) (template_ident (identifier)))
+    (param (attribute (int_literal)) (identifier) (template_ident (identifier))))
+   (attribute (int_literal))
+   (template_ident (identifier))
+   (compound_statement))
+  (function_decl
+   (identifier)
+   (template_ident (identifier) (template_list (template_ident (identifier))))
+   (compound_statement))
+  (function_decl
+   (identifier)
+   (param_list
+    (param (identifier) (template_ident
+			 (identifier)
+			 (template_list (int_literal) (int_literal)))))
+   (template_ident (identifier) (template_list (int_literal) (int_literal)))
+   (compound_statement))
+  (function_decl (identifier) (compound_statement))
+  (function_decl
+   (attribute)
+   (attribute (int_literal) (int_literal))
+   (identifier)
+   (param_list
+    (param (attribute (identifier)) (identifier) (template_ident (identifier))))
+   (compound_statement)))

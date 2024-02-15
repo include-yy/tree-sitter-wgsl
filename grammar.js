@@ -52,11 +52,11 @@ module.exports = grammar({
 	_global_decl: $ => choice(
 	    ';',
 	    seq($.global_variable_decl, ';'),
-	    seq($.global_value_decl, ';'),
+	    seq($._global_value_decl, ';'),
 	    seq($.type_alias_decl, ';'),
+	    seq($.const_assert_statement, ';'),
 	    $.struct_decl,
 	    $.function_decl,
-	    seq($.const_assert_statement, ';'),
 	),
 	// $3.3
 	line_comment: $ => token(seq('//', /.*/)),
@@ -156,20 +156,24 @@ module.exports = grammar({
 	),
 	_optionally_typed_ident: $ => seq(
 	    field('name', $.identifier),
-	    field('type', optional(seq(':', $._type_specifier)))),
+	    optional(seq(':', field('type', $._type_specifier)))),
 	global_variable_decl: $ => seq(
 	    repeat($.attribute),
 	    $._variable_decl,
 	    optional(seq('=', field('value', $._expression))),
 	),
-	global_value_decl: $ => choice(
-	    seq('const', $._optionally_typed_ident,
-		'=', field('value', $._expression)),
-	    seq(repeat($.attribute),
-		'override',
-		$._optionally_typed_ident,
-		optional(seq('=', field('value', $._expression)))),
+	_global_value_decl: $ => choice(
+	    $.global_const_decl,
+	    $.global_override_decl,
 	),
+	global_const_decl: $ => seq(
+	    'const', $._optionally_typed_ident,
+	    '=', field('value', $._expression)),
+	global_override_decl: $ => seq(
+	    repeat($.attribute),
+	    'override',
+	    $._optionally_typed_ident,
+	    optional(seq('=', field('value', $._expression)))),
 	// $8.18
 	_expression: $ => choice(
 	    $.binary_expression,
@@ -382,8 +386,10 @@ module.exports = grammar({
 	    '(',
 	    field('parameters', optional($.param_list)),
 	    ')',
-	    field('type', optional(seq('->', repeat($.attribute),
-		$.template_ident))),
+	    optional(seq(
+		'->', repeat($.attribute),
+		field('type', $.template_ident),
+	    )),
 	    field('body', $.compound_statement),
 	),
         param_list: $ => commaSep1($.param),
@@ -400,7 +406,7 @@ module.exports = grammar({
 	    seq('@', 'const'),
 	    seq('@', 'diagnostic', $._diagnostic_control),
 	    seq('@', 'group', '(', $._expression, $._attrib_end),
-	    seq('@', 'id', '(', $._attrib_end),
+	    seq('@', 'id', '(', $._expression, $._attrib_end),
 	    seq('@', 'interpolate', '(', $._expression, $._attrib_end),
 	    seq('@', 'interpolate', '(', $._expression,
 		',', $._expression, $._attrib_end),

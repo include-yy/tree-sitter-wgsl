@@ -1,6 +1,6 @@
-=======
+=============
 line comments
-=======
+=============
 
 // 1 2 3 4 5 6
 // 1 1 4 5 1 4
@@ -17,9 +17,9 @@ line comments
  (line_comment)
  (line_comment))
 
-=======
+==============
 block comments
-=======
+==============
 
 /* a b c */
 

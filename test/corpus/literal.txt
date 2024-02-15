@@ -1,14 +1,14 @@
-=======
+============
 bool literal
-=======
+============
 
 const a = true;
 const a = false;
 -------
 
 (translation_unit
- (global_value_decl (identifier) (bool_literal))
- (global_value_decl (identifier) (bool_literal)))
+ (global_const_decl (identifier) (bool_literal))
+ (global_const_decl (identifier) (bool_literal)))
 
 ===========
 int literal
@@ -27,15 +27,15 @@ const a = 0x0114514;
 -------
 
 (translation_unit
- (global_value_decl (identifier) (int_literal))
- (global_value_decl (identifier) (int_literal))
- (global_value_decl (identifier) (int_literal))
- (global_value_decl (identifier) (int_literal))
- (global_value_decl (identifier) (int_literal))
- (global_value_decl (identifier) (int_literal))
- (global_value_decl (identifier) (int_literal))
- (global_value_decl (identifier) (int_literal))
- (global_value_decl (identifier) (int_literal)))
+ (global_const_decl (identifier) (int_literal))
+ (global_const_decl (identifier) (int_literal))
+ (global_const_decl (identifier) (int_literal))
+ (global_const_decl (identifier) (int_literal))
+ (global_const_decl (identifier) (int_literal))
+ (global_const_decl (identifier) (int_literal))
+ (global_const_decl (identifier) (int_literal))
+ (global_const_decl (identifier) (int_literal))
+ (global_const_decl (identifier) (int_literal)))
 
 =============
 float literal
@@ -57,16 +57,16 @@ const f = 0x3.2p+2h;
 -------------
 
 (translation_unit
- (global_value_decl (identifier) (float_literal))
- (global_value_decl (identifier) (float_literal))
- (global_value_decl (identifier) (float_literal))
- (global_value_decl (identifier) (float_literal))
- (global_value_decl (identifier) (float_literal))
- (global_value_decl (identifier) (float_literal))
- (global_value_decl (identifier) (float_literal))
- (global_value_decl (identifier) (float_literal))
- (global_value_decl (identifier) (float_literal))
- (global_value_decl (identifier) (float_literal))
- (global_value_decl (identifier) (float_literal))
- (global_value_decl (identifier) (float_literal))
- (global_value_decl (identifier) (float_literal)))
+ (global_const_decl (identifier) (float_literal))
+ (global_const_decl (identifier) (float_literal))
+ (global_const_decl (identifier) (float_literal))
+ (global_const_decl (identifier) (float_literal))
+ (global_const_decl (identifier) (float_literal))
+ (global_const_decl (identifier) (float_literal))
+ (global_const_decl (identifier) (float_literal))
+ (global_const_decl (identifier) (float_literal))
+ (global_const_decl (identifier) (float_literal))
+ (global_const_decl (identifier) (float_literal))
+ (global_const_decl (identifier) (float_literal))
+ (global_const_decl (identifier) (float_literal))
+ (global_const_decl (identifier) (float_literal)))

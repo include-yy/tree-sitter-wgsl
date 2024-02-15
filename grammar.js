@@ -423,7 +423,10 @@ module.exports = grammar({
 	    seq('@', 'fragment'),
 	    seq('@', 'compute'),
 	),
-	_attrib_end: $ => token(seq(optional(','), ')')),
+	// When wrap _attrib_end with token(), parser.c's size
+	// increases about 50KB. Maybe it causes some inline
+	// optimization
+	_attrib_end: $ => seq(optional(','), ')'),
 	_diagnostic_control: $ => seq(
 	    '(',
 	    field('level', choice('error', 'warning', 'info', 'off')),

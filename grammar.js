@@ -93,6 +93,8 @@ module.exports = grammar({
 	//(approximately 175 KB less) and speed up the generation process
 	identifier: $ => /([a-zA-Z_][0-9a-zA-Z][0-9a-zA-Z_]*)|([a-zA-Z][0-9a-zA-Z_]*)/,
 	// $3.10
+	// steal from tree-sitter-cpp's $.template_argument_list
+	// https://github.com/tree-sitter/tree-sitter-cpp/blob/master/grammar.js
 	template_list: $ => seq(
 	    '<',
 	    commaSep1(choice(

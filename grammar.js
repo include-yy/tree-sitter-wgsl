@@ -116,51 +116,60 @@ module.exports = grammar({
 	diagnostic_directive: $ => seq('diagnostic', $._diagnostic_control, ';'),
 	// $6.2.10
 	struct_decl: $ => seq(
-	    "struct",
-	    field("name", $.identifier),
+	    'struct',
+	    field('name', $.identifier),
 	    '{',
 	    commaSep1($.struct_member),
 	    '}',
 	),
 	struct_member: $ => seq(
 	    repeat($.attribute),
-	    field("name", $.identifier),
-	    ":",
-	    field("type", $._type_specifier),
+	    field('name', $.identifier),
+	    ':',
+	    field('type', $._type_specifier),
 	),
 	// $6.7
-	type_alias_decl: $ => seq("alias", $.identifier, "=", $._type_specifier),
+	type_alias_decl: $ => seq('alias', $.identifier, '=', $._type_specifier),
 	// $6.8
 	_type_specifier: $ => $.template_elaborated_ident,
 	template_elaborated_ident: $ => seq(
-	    field('name', $.identifier),
-	    field('arguments', optional($.template_list)),
+	    field('ident', $.identifier),
+	    field('list', optional($.template_list)),
 	),
 	// $7.4
-	variable_or_value_statement: $ => choice(
-	    $.variable_decl,
-	    seq($.variable_decl, "=", $._expression),
-	    seq("let", $._optionally_typed_ident, "=", $._expression),
-	    seq("const", $._optionally_typed_ident, "=", $._expression),
+	_variable_or_value_statement: $ => choice(
+	    $.variable_statement,
+	    $.value_statement,
 	),
-	variable_decl: $ => seq(
-	    "var",
-	    optional($.template_list),
+	variable_statement: $ => seq(
+	    $._variable_decl,
+	    optional(seq('=', field('value', $._expression)))
+	),
+	value_statement: $ => seq(
+	    choice('let', 'const'),
+	    $._optionally_typed_ident,
+	    '=', field('value', $._expression),
+	),
+	_variable_decl: $ => seq(
+	    'var',
+	    field('reftype', optional($.template_list)),
 	    $._optionally_typed_ident,
 	),
-	_optionally_typed_ident: $ =>
-	    seq($.identifier, optional(seq(":", $._type_specifier))),
+	_optionally_typed_ident: $ => seq(
+	    field('name', $.identifier),
+	    field('type', optional(seq(':', $._type_specifier)))),
 	global_variable_decl: $ => seq(
 	    repeat($.attribute),
-	    $.variable_decl,
-	    optional(seq("=", $._expression)),
+	    $._variable_decl,
+	    optional(seq('=', field('value', $._expression))),
 	),
 	global_value_decl: $ => choice(
-	    seq("const", $._optionally_typed_ident, "=", $._expression),
+	    seq('const', $._optionally_typed_ident,
+		'=', field('value', $._expression)),
 	    seq(repeat($.attribute),
-		"override",
+		'override',
 		$._optionally_typed_ident,
-		optional(seq("=", $._expression))),
+		optional(seq('=', field('value', $._expression)))),
 	),
 	// $8.18
 	_expression: $ => choice(
@@ -323,7 +332,7 @@ module.exports = grammar({
 	    optional($.for_update),
 	),
         for_init: $ => choice(
-	    $.variable_or_value_statement,
+	    $._variable_or_value_statement,
 	    $.variable_updating_statement,
 	    $.func_call_statement,
         ),
@@ -367,7 +376,7 @@ module.exports = grammar({
             $.for_statement,
             $.while_statement,
             seq($.func_call_statement, ";"),
-            seq($.variable_or_value_statement, ";"),
+            seq($._variable_or_value_statement, ";"),
             seq($.break_statement, ";"),
             seq($.continue_statement, ";"),
             seq("discard", ";"),

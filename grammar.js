@@ -47,7 +47,7 @@ module.exports = grammar({
     rules: {
 	// $2
 	translation_unit: $ => seq(
-	    repeat($.global_directive),
+	    repeat($._global_directive),
 	    repeat($._global_decl),
 	),
 	_global_decl: $ => choice(
@@ -58,11 +58,6 @@ module.exports = grammar({
 	    $.struct_decl,
 	    $.function_decl,
 	    seq($.const_assert_statement, ';'),
-	),
-	// $2.3
-	diagnostic_rule_name: $ => choice(
-	    $.identifier,
-	    seq($.identifier, '.', $.identifier),
 	),
 	// $3.3
 	line_comment: $ => token(seq('//', /.*/)),
@@ -108,25 +103,17 @@ module.exports = grammar({
 	    alias(token(prec(1, '>')), '>'),
 	),
 	// $4
-	global_directive: $ => choice(
+	_global_directive: $ => choice(
 	    $.diagnostic_directive,
 	    $.enable_directive,
 	    $.requires_directive,
 	),
 	// $4.1.1
-	enable_directive: $ => seq(
-	    "enable",
-	    commaSep1($.identifier),
-	    ";",
-	),
+	enable_directive: $ => seq('enable', commaSep1($.identifier), ';'),
 	// $4.1.2
-	requires_directive: $ => seq(
-	    "require",
-	    commaSep1($.identifier),
-	    ";",
-	),
+	requires_directive: $ => seq('requires', commaSep1($.identifier), ';'),
 	// $4.2
-	diagnostic_directive: $ => seq("diagnostic", $.diagnostic_control, ";"),
+	diagnostic_directive: $ => seq('diagnostic', $._diagnostic_control, ';'),
 	// $6.2.10
 	struct_decl: $ => seq(
 	    "struct",
@@ -417,7 +404,7 @@ module.exports = grammar({
 	    seq("@", "binding", "(", $._expression, $._attrib_end),
 	    seq("@", "builtin", "(", $._expression, $._attrib_end),
 	    seq("@", "const"),
-	    seq("@", "diagnostic", $.diagnostic_control),
+	    seq("@", "diagnostic", $._diagnostic_control),
 	    seq("@", "group", "(", $._expression, $._attrib_end),
 	    seq("@", "id", "(", $._attrib_end),
 	    seq("@", "interpolate", "(", $._expression, $._attrib_end),
@@ -436,15 +423,15 @@ module.exports = grammar({
 	    seq("@", "fragment"),
 	    seq("@", "compute"),
 	),
-	_attrib_end: $ => seq(optional(","), ")"),
-	diagnostic_control: $ => seq(
-	    "(", $.severity_control_name, ",",
-	    $.diagnostic_rule_name, $._attrib_end,
+	_attrib_end: $ => token(seq(optional(","), ")")),
+	_diagnostic_control: $ => seq(
+	    '(',
+	    field('level', choice('error', 'warning', 'info', 'off')),
+	    ',',
+	    field('name', seq($.identifier, optional(seq('.', $.identifier)))),
+	    $._attrib_end,
 	),
 	//$15.4
-	severity_control_name: $ => choice(
-	    "error", "warning", "info", "off",
-	),
 	swizzle_name: $ => choice(
 	    token(/[rgba]/),
 	    token(/[rgba][rgba]/),

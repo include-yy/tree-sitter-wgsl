@@ -1,0 +1,53 @@
+================
+enable directive
+================
+
+enable arbitrary_precision_float;
+enable arbitrary_precision_float;
+enable rounding_mode;
+enable arbitrary_precision_float, rounding_mode;
+
+----------------
+
+(translation_unit
+ (enable_directive (identifier))
+ (enable_directive (identifier))
+ (enable_directive (identifier))
+ (enable_directive (identifier) (identifier)))
+
+==================
+requires directive
+==================
+
+requires readonly_and_readwrite_storage_textures;
+requires packed_4x8_integer_dot_product;
+requires unrestricted_pointer_parameters;
+requires pointer_composite_access;
+requires a,b,c,d;
+
+------------------
+
+(translation_unit
+ (requires_directive (identifier))
+ (requires_directive (identifier))
+ (requires_directive (identifier))
+ (requires_directive (identifier))
+ (requires_directive (identifier) (identifier)
+		     (identifier) (identifier)))
+
+====================
+diagnostic directive
+====================
+
+diagnostic (error, a.b);
+diagnostic (warning, hello);
+diagnostic (info, hello);
+diagnostic (off, hello);
+
+-------------
+
+(translation_unit
+ (diagnostic_directive (identifier) (identifier))
+ (diagnostic_directive (identifier))
+ (diagnostic_directive (identifier))
+ (diagnostic_directive (identifier)))

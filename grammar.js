@@ -39,7 +39,7 @@ module.exports = grammar({
     ],
 
     conflicts: $ => [
-	[$.template_elaborated_ident, $._expression],
+	[$.template_ident, $._expression],
 	[$._type_specifier, $._expression],
     ],
 
@@ -130,10 +130,10 @@ module.exports = grammar({
 	// $6.7
 	type_alias_decl: $ => seq('alias', $.identifier, '=', $._type_specifier),
 	// $6.8
-	_type_specifier: $ => $.template_elaborated_ident,
-	template_elaborated_ident: $ => seq(
-	    field('ident', $.identifier),
-	    field('list', optional($.template_list)),
+	_type_specifier: $ => $.template_ident,
+	template_ident: $ => seq(
+	    field('name', $.identifier),
+	    field('arguments', optional($.template_list)),
 	),
 	// $7.4
 	_variable_or_value_statement: $ => choice(
@@ -175,14 +175,14 @@ module.exports = grammar({
 	    $.binary_expression,
 	    $._literal,
 	    $.identifier,
-	    $.template_elaborated_ident,
+	    $.template_ident,
 	    $.call_expression,
 	    $.paren_expression,
 	    $.unary_expression,
 	    $.singular_expression,
 	),
 	call_expression: $ => seq(
-	    $.template_elaborated_ident,
+	    $.template_ident,
 	    seq('(', commaSep($._expression), ')'),
 	),
 	paren_expression: $ => seq('(', $._expression, ')'),
@@ -201,7 +201,7 @@ module.exports = grammar({
 	),
 	singular_expression: $ => seq(
 	    choice(
-		$.template_elaborated_ident,
+		$.template_ident,
 		$.call_expression,
 		$._literal,
 		$.paren_expression,
@@ -383,7 +383,7 @@ module.exports = grammar({
 	    field('parameters', optional($.param_list)),
 	    ')',
 	    field('type', optional(seq('->', repeat($.attribute),
-		$.template_elaborated_ident))),
+		$.template_ident))),
 	    field('body', $.compound_statement),
 	),
         param_list: $ => commaSep1($.param),

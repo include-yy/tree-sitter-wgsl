@@ -16,7 +16,6 @@ const PREC = {
     ADD: 10,
     MULTIPLY: 11,
     UNARY: 14,
-    CALL: 15,
 }
 
 module.exports = grammar({
@@ -180,28 +179,24 @@ module.exports = grammar({
 	    $.call_expression,
 	    $.paren_expression,
 	    $.unary_expression,
-	    // $.subscript_expression,
-	    //	    $.field_expression,
 	    $.singular_expression,
 	),
-	call_expression: $ => $.call_phrase,
-	call_phrase: $ => prec(PREC.CALL, seq(
+	call_expression: $ => seq(
 	    $.template_elaborated_ident,
-	    $.argument_expression_list,
-	)),
-	argument_expression_list: $ =>
-	    seq("(", commaSep($._expression), ")"),
-	paren_expression: $ => seq("(", $._expression, ")"),
+	    seq('(', commaSep($._expression), ')'),
+	),
+	paren_expression: $ => seq('(', $._expression, ')'),
 	component_or_swizzle_specifier: $ => prec.left(PREC.UNARY, seq(
-	    repeat1(choice(
-		field("index", seq("[", $._expression, "]")),
-		field("field", seq(".", $.identifier)),
-	    )),
+	    choice(
+		field('index', seq('[', $._expression, ']')),
+		field('field', seq('.', $.identifier)),
+	    ),
+	    optional($.component_or_swizzle_specifier),
 	)),
 	unary_expression: $ => prec.left(PREC.UNARY,
 	    seq(
-		field("operator", choice("-", "!", "~", "*", "&")),
-		field("argument", $._expression),
+		field('operator', token(choice('-', '!', '~', '*', '&'))),
+		field('argument', $._expression),
 	    )
 	),
 	singular_expression: $ => seq(
@@ -215,38 +210,38 @@ module.exports = grammar({
 	),
 	binary_expression: $ => {
 	    const table = [
-		["||", PREC.LOGICAL_OR],
-		["&&", PREC.LOGICAL_AND],
-		["|", PREC.INCLUSIVE_OR],
-		["^", PREC.EXCLUSIVE_OR],
-		["&", PREC.BITWISE_AND],
-		["==", PREC.EQUAL],
-		["!=", PREC.EQUAL],
-		["<", PREC.RELATIONAL],
-		[">", PREC.RELATIONAL],
-		["<=", PREC.RELATIONAL],
-		[">=", PREC.RELATIONAL],
-		["<<", PREC.SHIFT],
-		[">>", PREC.SHIFT],
-		["+", PREC.ADD],
-		["-", PREC.ADD],
-		["*", PREC.MULTIPLY],
-		["/", PREC.MULTIPLY],
-		["%", PREC.MULTIPLY],
+		['||', PREC.LOGICAL_OR],
+		['&&', PREC.LOGICAL_AND],
+		['|', PREC.INCLUSIVE_OR],
+		['^', PREC.EXCLUSIVE_OR],
+		['&', PREC.BITWISE_AND],
+		['==', PREC.EQUAL],
+		['!=', PREC.EQUAL],
+		['<', PREC.RELATIONAL],
+		['>', PREC.RELATIONAL],
+		['<=', PREC.RELATIONAL],
+		['>=', PREC.RELATIONAL],
+		['<<', PREC.SHIFT],
+		['>>', PREC.SHIFT],
+		['+', PREC.ADD],
+		['-', PREC.ADD],
+		['*', PREC.MULTIPLY],
+		['/', PREC.MULTIPLY],
+		['%', PREC.MULTIPLY],
 	    ];
 	    return choice(...table.map(([operator, precedence]) => {
 		return prec.left(precedence, seq(
-		    field("left", $._expression),
-		    field("operator", operator),
-		    field("right", $._expression),
+		    field('left', $._expression),
+		    field('operator', operator),
+		    field('right', $._expression),
 		));
 	    }));
-		},
+	},
 	lhs_expression: $ => seq(
-	    repeat(choice("*", "&")),
+	    repeat(token(choice('*', '&'))),
 	    choice(
 		$.identifier,
-		seq("(", $.lhs_expression, ")"),
+		seq('(', $.lhs_expression, ')'),
 	    ),
 	    optional($.component_or_swizzle_specifier),
 	),
@@ -363,7 +358,7 @@ module.exports = grammar({
 	//$9.4.10
 	return_statement: $ => seq("return", optional($._expression)),
 	//$9.5
-        func_call_statement: $ => $.call_phrase,
+        func_call_statement: $ => $.call_expression,
 	//$9.6
 	const_assert_statement: $ => seq("const_assert", $._expression),
 	//$9.7

@@ -1,0 +1,70 @@
+* tree-sitter-wgsl
+
+[[https://www.w3.org/TR/2024/WD-WGSL-20240205/][WebGPU Shading Language WD-WGSL-20240205]] grammar for [[https://tree-sitter.github.io/tree-sitter/][tree-sitter]].
+
+inspired and guided by [[https://github.com/szebniok/tree-sitter-wgsl][szebniok/tree-sitter-wgsl]].
+
+** About
+
+At first, what is WGSL, and what is tree-sitter?
+
+#+BEGIN_QUOTE
+WebGPU Shading Language (WGSL) is the shader language for
+[WebGPU]. That is, an application using the WebGPU API uses WGSL to
+express the programs, known as shaders, that run on the GPU.
+
+[[https://www.w3.org/TR/WGSL/#intro][Introduction | WebGPU Shading Language]]
+
+Tree-sitter is a parser generator tool and an incremental parsing
+library. It can build a concrete syntax tree for a source file and
+efficiently update the syntax tree as the source file is edited.
+
+[[https://tree-sitter.github.io/tree-sitter/][Introduction | Tree-sitter]]
+#+END_QUOTE
+
+The goal of this repo is to provide a grammar for WGSL that would
+enable tree-sitter to efficiently build a concrete syntax tree for a
+source file. The generated parser can then be used with emacs's
+builtin [[https://www.gnu.org/software/emacs/manual/html_node/elisp/Parsing-Program-Source.html][treesit]] support to provide better major mode experience and
+more convenient emacs addons development experience.
+
+Currently this grammar is far from mature, TODO list below shows
+things need to be done.
+
+** Get and Use
+
+To use this grammar, you first need to download it from github:
+
+#+BEGIN_SRC text
+git clone https://github.com/include-yy/tree-sitter-wgsl --depth 1
+#+END_SRC
+
+If you want to do further development, node.js should be installed,
+run the npm commands below to download necessary devtools:
+
+#+BEGIN_SRC text
+npm i
+#+END_SRC
+
+You can use =npx= to activate dev environment, and then use
+=tree-sitter= command to generate and test grammar. See [[https://tree-sitter.github.io/tree-sitter/creating-parsers][Creating parsers]]
+for more information.
+
+If you just want to use the existing parser, you can compile like this
+in =src= directory:
+
+#+BEGIN_SRC text
+  gcc -fPIC -c -I. parser.c
+  gcc -fPIC -c -I. scanner.c
+  gcc -fPIC -shared *.o -o "libtree-sitter-wgsl.so"
+  # with MSYS2 on Windows
+  gcc -fPIC -shared *.o -o "libtree-sitter-wgsl.dll"
+#+END_SRC
+
+** ToDo List
+
+- [ ] add more test cases
+  Currently there are just simple test files for literal, comment and directive
+- [ ] rename some unconvenient name, such as =template_elaborated_ident= and =component_or_swizzle_specifier=
+- [ ] add hightlight.scm(but I am not a nvim user)
+- [ ] add more examples

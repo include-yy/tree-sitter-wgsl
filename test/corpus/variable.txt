@@ -1,0 +1,73 @@
+============================
+variable_statement variable0
+============================
+
+fn main() {
+var<storage,read> buf1: Buffer;
+var<storage> buf2: Buffer;
+var u32_1 = 1u;
+var i32_from_type : i32 = 1;
+var<private> c: array<i32,8u>;
+}
+
+----------------------------------
+
+(translation_unit
+ (function_decl
+  (identifier)
+  (compound_statement
+   (variable_statement
+    (template_list (template_ident (identifier)) (template_ident (identifier)))
+    (identifier)
+    (template_ident (identifier)))
+   (variable_statement
+    (template_list (template_ident (identifier)))
+    (identifier)
+    (template_ident (identifier)))
+   (variable_statement
+    (identifier) (int_literal))
+   (variable_statement
+    (identifier)
+    (template_ident (identifier))
+    (int_literal))
+   (variable_statement
+    (template_list (template_ident (identifier)))
+    (identifier)
+    (template_ident
+     (identifier)
+     (template_list (template_ident (identifier)) (int_literal)))))))
+
+=========================
+value_statement variable0
+=========================
+
+fn main() {
+let a = 1;
+const b = 2;
+let a : vec3<f32> = vec3f(0);
+let nDotL = max(dot(N, dir), 0);
+}
+
+-----------------------
+
+(translation_unit
+ (function_decl
+  (identifier)
+  (compound_statement
+   (value_statement (identifier) (int_literal))
+   (value_statement (identifier) (int_literal))
+   (value_statement
+    (identifier)
+    (template_ident (identifier) (template_list (template_ident (identifier))))
+    (call_expression (template_ident (identifier))
+		     (argument_expression_list (int_literal))))
+   (value_statement
+    (identifier)
+    (call_expression
+     (template_ident (identifier))
+     (argument_expression_list
+      (call_expression
+       (template_ident (identifier))
+       (argument_expression_list
+	(identifier) (identifier)))
+      (int_literal)))))))

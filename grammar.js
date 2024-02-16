@@ -188,9 +188,10 @@ module.exports = grammar({
 	    $.singular_expression,
 	),
 	call_expression: $ => seq(
-	    $.template_ident,
-	    seq('(', commaSep($._expression), ')'),
+	    field('function', $.template_ident),
+	    field('arguments', $.argument_expression_list),
 	),
+	argument_expression_list: $ => seq('(', commaSep($._expression), ')'),
 	paren_expression: $ => seq('(', $._expression, ')'),
 	component_or_swizzle_specifier: $ => prec.left(PREC.UNARY, seq(
 	    choice(

@@ -28,7 +28,7 @@ source file. The generated parser can then be used with emacs's
 builtin [[https://www.gnu.org/software/emacs/manual/html_node/elisp/Parsing-Program-Source.html][treesit]] support to provide better major mode experience and
 more convenient emacs addons development experience.
 
-Currently this grammar is far from mature, TODO list below shows
+Currently this grammar is far from mature, ToDo list below shows
 things need to be done.
 
 ** Get and Use
@@ -61,10 +61,18 @@ in =src= directory:
   gcc -fPIC -shared *.o -o "libtree-sitter-wgsl.dll"
 #+END_SRC
 
+** Development
+
+issue and pr are welcomed. Whether it's correcting mistakes,
+synchronizing with the latest standards, or pointing out errors in the
+grammar, all are acceptable.If you wish to submit a pull request,
+please make sure it passes all tests under test/corpus (of course, you
+may modify the test files as needed).
+
 ** ToDo List
 
-- [ ] add more test cases
+- [X] add more test cases
   Currently there are just simple test files for literal, comment and directive
-- [ ] rename some unconvenient name, such as =template_elaborated_ident= and =component_or_swizzle_specifier=
-- [ ] add hightlight.scm(but I am not a nvim user)
+- [X] rename some unconvenient name, such as =template_elaborated_ident= and =component_or_swizzle_specifier=
 - [ ] add more examples
+- [ ] add hightlight.scm(but I am not a nvim user)

@@ -1,0 +1,1848 @@
+//https://www.w3.org/TR/2024/WD-WGSL-20240205/
+
+// Enable a hypothetical extension for arbitrary precision floating point types.
+enable arbitrary_precision_float;
+enable arbitrary_precision_float; // A redundant enable directive is ok.
+
+// Enable a hypothetical extension to control the rounding mode.
+enable rounding_mode;
+
+
+diagnostic(off,derivative_uniformity);
+
+var<private> d: f32;
+fn helper() -> vec4<f32> {
+  if (d < 0.5) {
+    // The derivative_uniformity diagnostic is disabled here
+    // by the global diagnostic filter.
+    return textureSample(t,s,vec2(0,0));
+  } else {
+    // The derivative_uniformity diagnostic is set to 'warning' severity.
+    @diagnostic(warning,derivative_uniformity) {
+      return textureSample(t,s,vec2(0,0));
+    }
+  }
+  return vec4(0.0);
+}
+
+// Assuming arbitrary_precision_float enables use of:
+//    - a type f<E,M>
+//    - as a type in function return, formal parameters and let-declarations
+//    - as a value constructor from AbstractFloat
+//    - operands to division operator: /
+// Assuming @rounding_mode attribute is enabled by the rounding_mode enable directive.
+@rounding_mode(round_to_even)
+fn halve_it(x : f<8, 7>) -> f<8, 7> {
+  let two = f<8, 7>(2);
+  return x / 2; // uses round to even rounding mode.
+}
+
+// A fragment shader which lights textured geometry with point lights.
+
+// Lights from a storage buffer binding.
+struct PointLight {
+  position : vec3f,
+  color : vec3f,
+}
+
+struct LightStorage {
+  pointCount : u32,
+  point : array<PointLight>,
+}
+@group(0) @binding(0) var<storage> lights : LightStorage;
+
+// Texture and sampler.
+@group(1) @binding(0) var baseColorSampler : sampler;
+@group(1) @binding(1) var baseColorTexture : texture_2d<f32>;
+
+// Function arguments are values from the vertex shader.
+@fragment
+fn fragmentMain(@location(0) worldPos : vec3f,
+                @location(1) normal : vec3f,
+                @location(2) uv : vec2f) -> @location(0) vec4f {
+  // Sample the base color of the surface from a texture.
+  let baseColor = textureSample(baseColorTexture, baseColorSampler, uv);
+
+  let N = normalize(normal);
+  var surfaceColor = vec3f(0);
+
+  // Loop over the scene point lights.
+  for (var i = 0u; i < lights.pointCount; i++) {
+    let worldToLight = lights.point[i].position - worldPos;
+    let dist = length(worldToLight);
+    let dir = normalize(worldToLight);
+
+    // Determine the contribution of this light to the surface color.
+    let radiance = lights.point[i].color * (1 / pow(dist, 2));
+    let nDotL = max(dot(N, dir), 0);
+
+    // Accumulate light contribution to the surface color.
+    surfaceColor += baseColor.rgb * radiance * nDotL;
+  }
+
+  // Return the accumulated surface color.
+  return vec4(surfaceColor, baseColor.a);
+}
+
+var<private> d: f32;
+fn helper() -> vec4<f32> {
+  // Disable the derivative_uniformity diagnostic in the
+  // body of the "if".
+  if (d < 0.5) @diagnostic(off,derivative_uniformity) {
+    return textureSample(t,s,vec2(0,0));
+  }
+  return vec4(0.0);
+}
+
+const a = true;
+const b = false;
+
+const a = 1u;
+const b = 123;
+const c = 0;
+const d = 0i;
+
+const a = 0x123;
+const b = 0X123u;
+const c = 0x3f;
+
+const a = 0.e+4f;
+const b = 01.;
+const c = .01;
+const d = 12.34;
+const f = .0f;
+const g = 0h;
+const h = 1e-3;
+
+const a = 0xa.fp+2;
+const b = 0x1P+4f;
+const c = 0X.3;
+const d = 0x3p+2h;
+const e = 0X1.fp-4;
+const f = 0x3.2p+2h;
+
+// Valid, user-defined variables can have the same name as a built-in function.
+var<private> modf: f32 = 0.0;
+
+// Valid, foo_1 is in scope for the entire program.
+var<private> foo: f32 = 0.0; // foo_1
+
+// Valid, bar_1 is in scope for the entire program.
+var<private> bar: u32 = 0u; // bar_1
+
+// Valid, my_func_1 is in scope for the entire program.
+// Valid, foo_2 is in scope until the end of the function.
+fn my_func(foo: f32) { // my_func_1, foo_2
+  // Any reference to 'foo' resolves to the function parameter.
+
+  // Invalid, modf resolves to the module-scope variable.
+  let res = modf(foo);
+
+  // Invalid, the scope of foo_2 ends at the of the function.
+  var foo: f32; // foo_3
+
+  // Valid, bar_2 is in scope until the end of the function.
+  var bar: u32; // bar_2
+  // References to 'bar' resolve to bar_2
+  {
+    // Valid, foo_4 is in scope until the end of the compound statement.
+    var foo : f32; // foo_4
+
+    // Valid, bar_3 is in scope until the end of the compound statement.
+    var bar: u32; // bar_3
+    // References to 'bar' resolve to bar_3
+
+    // Invalid, bar_4 has the same end scope as bar_3.
+    var bar: i32; // bar_4
+
+    // Valid, i_1 is in scope until the end of the for loop
+    for ( var i: i32 = 0; i < 10; i++ ) { // i_1
+      // Invalid, i_2 has the same end scope as i_1.
+      var i: i32 = 1; // i_2.
+    }
+  }
+
+  // Invalid, bar_5 has the same end scope as bar_2.
+  var bar: u32; // bar_5
+
+  // Valid, later_def, a module scope declaration, is in scope for the entire program.
+  var early_use : i32 = later_def;
+}
+
+// Invalid, bar_6 has the same scope as bar_1.
+var<private> bar: u32 = 1u; // bar_6
+
+// Invalid, my_func_2 has the same end scope as my_func_1.
+fn my_func() { } // my_func_2
+
+// Valid, my_foo_1 is in scope for the entire program.
+fn my_foo( //my_foo_1
+  // Valid, my_foo_2 is in scope until the end of the function.
+  my_foo: i32 // my_foo_2
+) { }
+
+var<private> later_def : i32 = 1;
+
+// This declaration hides the predeclared 'min' built-in function.
+// Since this declaration is at module-scope, it is in scope over the entire
+// source.  The built-in function is no longer accessible.
+fn min() -> u32 { return 0; }
+
+const rgba8unorm = 12; // This shadows the predeclared 'rgba8unorm' enumerant.
+
+fn foo(p : ptr<function, i32>) -> i32 {
+  let x = *p;
+  *p += 1;
+  return x;
+}
+
+fn bar() {
+  var a: i32;
+  let x = foo(&a); // the call to foo returns a value
+                   // and updates the value of a
+}
+
+fn bar() {
+// Explicitly-typed unsigned integer literal.
+var u32_1 = 1u; // variable holds a u32
+
+// Explicitly-typed signed integer literal.
+var i32_1 = 1i; // variable holds a i32
+
+// Explicitly-typed floating point literal.
+var f32_1 = 1f; // variable holds a f32
+
+// Explicitly-typed unsigned integer literal cannot be negated.
+var u32_neg = -1u; // invalid: unary minus does not support u32
+
+// When a concrete type is required, but no part of the statement or
+// expression forces a particular concrete type, an integer literal is
+// interpreted as an i32 value:
+//   Initializer for a let-declaration must be constructible (or pointer).
+//   The most preferred automatic conversion from AbstractInt to a constructible type
+//   is AbstractInt to i32, with conversion rank 2.  So '1' is inferred as i32.
+let some_i32 = 1; // like let some_i32: i32 = 1i;
+
+// Inferred from declaration type.
+var i32_from_type : i32 = 1; // variable holds i32.  AbstractInt to i32, conversion rank 2
+var u32_from_type : u32 = 1; // variable holds u32.  AbstractInt to u32, conversion rank 3
+
+// Unsuffixed integer literal can convert to floating point when needed:
+//   Automatically convert AbstractInt to f32, with conversion rank 5.
+var f32_promotion : f32 = 1; // variable holds f32
+
+// Invalid: no feasible conversion from floating point to integer
+var i32_demotion : i32 = 1.0; // Invalid
+
+// Inferred from expression.
+var u32_from_expr = 1 + u32_1; // variable holds u32
+var i32_from_expr = 1 + i32_1; // variable holds i32
+
+// Values must be representable.
+let u32_too_large   : u32 = 1234567890123456890; // invalid, overflow
+let i32_too_large   : i32 = 1234567890123456890; // invalid, overflow
+let u32_large : u32 = 2147483649; // valid
+let i32_large : i32 = 2147483649; // invalid, overflow
+let f32_out_of_range1 = 0x1p500; // invalid, out of range
+let f32_hex_lost_bits = 0x1.0000000001p0; // invalid, not exactly representable in f32
+
+// Minimum integer: unary negation over AbstractInt, then infer i32.
+// Most preferred conversion from AbstractInt to a constructible type (with lowest
+// conversion rank) is AbstractInt to i32.
+let i32_min = -2147483648;  // has type i32
+
+// Invalid.  Select AbstractInt to i32 as above, but the value is out of
+// range, producing shader-creation error.
+let i32_too_large_2 = 2147483648; // Invalid.
+
+// Subexpressions can resolve to AbstractInt and AbstractFloat.
+// The following examples are all valid and the value of the variable is 6u.
+var u32_expr1 = (1 + (1 + (1 + (1 + 1)))) + 1u;
+var u32_expr2 = 1u + (1 + (1 + (1 + (1 + 1))));
+var u32_expr3 = (1 + (1 + (1 + (1u + 1)))) + 1;
+var u32_expr4 = 1 + (1 + (1 + (1 + (1u + 1))));
+
+// Inference based on built-in function parameters.
+
+// Most-preferred candidate is clamp(i32,i32,i32)->i32
+let i32_clamp = clamp(1, -5, 5);
+// Most preferred candidate is clamp(u32,u32,u32).
+// Literals use automatic conversion AbstractInt to u32.
+let u32_clamp = clamp(5, 0, u32_from_expr);
+// Most preferred candidate is clamp(f32,f32,f32)->f32
+// literals use automatic conversion AbstractInt to f32.
+let f32_clamp = clamp(0, f32_1, 1);
+
+// The following examples all promote to f32 with an initial value of 10f.
+let f32_promotion1 = 1.0 + 2 + 3 + 4;
+let f32_promotion2 = 2 + 1.0 + 3 + 4;
+let f32_promotion3 = 1f + ((2 + 3) + 4);
+let f32_promotion4 = ((2 + (3 + 1f)) + 4);
+
+// Type rule violations.
+
+// Invalid, the initializer can only resolve to f32:
+// No feasible automatic conversion from AbstractFloat to u32.
+let mismatch : u32 = 1.0;
+
+// Invalid. There is no overload of clamp that allows mixed sign parameters.
+let ambiguous_clamp = clamp(1u, 0, 1i);
+
+// Inference completes at the statement level.
+
+// Initializer for a let-declaration must be constructible (or pointer).
+// The most preferred automatic conversion from AbstractInt to a constructible type
+// is AbstractInt to i32, with conversion rank 2.  So '1' is inferred as i32.
+let some_i32 = 1; // like let some_i32: i32 = 1i;
+
+let some_f32 : f32 = some_i32; // Type error: i32 cannot be assigned to f32
+
+// Another overflow case
+let overflow_u32 = (1 -2) + 1u; // invalid, -1 is out of range of u32
+
+// Ideal value out of range of 32-bits, but brought back into range
+let out_and_in_again = (0x1ffffffff / 8);
+
+// Similar, but invalid
+let out_of_range = (0x1ffffffff / 8u); // requires computation is done in 32-bits,
+                                       // making 0x1ffffffff out of range.
+
+}
+
+// array<f32,8> and array<i32,8> are different types:
+// different element types
+var<private> a: array<f32,8>;
+var<private> b: array<i32,8>;
+var<private> c: array<i32,8u>;  // array<i32,8> and array<i32,8u> are the same type
+
+const width = 8;
+const height = 8;
+
+// array<i32,8>, array<i32,8u>, and array<i32,width> are the same type.
+// Their element counts evaluate to 8.
+var<private> d: array<i32,width>;
+
+// array<i32,height> and array<i32,width> are the same type.
+var<private> e: array<i32,width>;
+var<private> f: array<i32,height>;
+
+override blockSize = 16;
+
+var<workgroup> odds: array<i32,blockSize>;
+var<workgroup> evens: array<i32,blockSize>; // Same type
+
+// None of the following have the same type as 'odds' and 'evens'.
+
+// Different type: Not the identifier 'blockSize'
+var<workgroup> evens_0: array<i32,16>;
+// Different type: Uses arithmetic to express the element count.
+var<workgroup> evens_1: array<i32,(blockSize * 2 / 2)>;
+// Different type: Uses parentheses, not just an identifier.
+var<workgroup> evens_2: array<i32,(blockSize)>;
+
+// An invalid example, because the overridable element count may only occur
+// at the outer level.
+// var<workgroup> both: array<array<i32,blockSize>,2>;
+
+// An invalid example, because the overridable element count is only
+// valid for workgroup variables.
+// var<private> bad_address_space: array<i32,blockSize>;
+
+// A structure with three members.
+struct Data {
+  a: i32,
+  b: vec2<f32>,
+  c: array<i32,10>, // last comma is optional
+}
+
+// Declare a variable storing a value of type Data.
+var<private> some_data: Data;
+
+struct my_struct {
+  a: f32,
+  b: vec4<f32>
+}
+
+// Runtime Array
+alias RTArr = array<vec4<f32>>;
+struct S {
+  a: f32,
+  b: f32,
+  data: RTArr
+}
+@group(0) @binding(0) var<storage> buffer: S;
+
+fn my_function(
+  /* 'ptr<function,i32,read_write>' is the type of a pointer value that references
+     memory for keeping an 'i32' value, using memory locations in the 'function'
+     address space.  Here 'i32' is the store type.
+     The implied access mode is 'read_write'.
+     See "Address Space" section for defaults. */
+  ptr_int: ptr<function,i32>,
+
+  // 'ptr<private,array<f32,50>,read_write>' is the type of a pointer value that
+  // refers to memory for keeping an array of 50 elements of type 'f32', using
+  // memory locations in the 'private' address space.
+  // Here the store type is 'array<f32,50>'.
+  // The implied access mode is 'read_write'.
+  // See the "Address space section for defaults.
+  ptr_array: ptr<private, array<f32, 50>>
+) { }
+
+struct Particle {
+   position: vec2f,
+   velocity: vec2f,
+   color_index: i32,
+}
+
+@group(0) @binding(0)
+var<storage,read_write> the_particle: Particle;
+
+fn particle_velocity_component(p: Particle, i: i32) -> f32 {
+  return the_particle.velocity[i]; // A valid reference when i is 0 or 1.
+}
+
+@compute @workgroup_size(1)
+fn main() {
+  // 'i' has reference type ref<function,i32,read_write>
+  // The memory locations for 'i' store the i32 value 0.
+  var i: i32 = 0;
+
+  // 'i + 1' can only match a type rule where the 'i' subexpression is of type i32.
+  // So the expression 'i + 1' has type i32, and at evaluation, the 'i' subexpression
+  // evaluates to the i32 value stored in the memory locations for 'i' at the time
+  // of evaluation.
+  let one: i32 = i + 1;
+
+  // Update the value in the locations referenced by 'i' so they hold the value 2.
+  i = one + 1;
+
+  // Update the value in the locations referenced by 'i' so they hold the value 5.
+  // The evaluation of the right-hand-side occurs before the assignment takes effect.
+  i = i + 3;
+}
+
+var<private> age: i32;
+fn get_age() -> i32 {
+  // The type of the expression in the return statement must be 'i32' since it
+  // must match the declared return type of the function.
+  // The 'age' expression is of type ref<private,i32,read_write>.
+  // Apply the Load Rule, since the store type of the reference matches the
+  // required type of the expression, and no other type rule applies.
+  // The evaluation of 'age' in this context is the i32 value loaded from the
+  // memory locations referenced by 'age' at the time the return statement is
+  // executed.
+  return age;
+}
+
+fn caller() {
+  age = 21;
+  // The copy_age constant will get the i32 value 21.
+  let copy_age: i32 = get_age();
+}
+
+struct Particle {
+  position: vec3<f32>,
+  velocity: vec3<f32>
+}
+struct System {
+  active_index: i32,
+  timestep: f32,
+  particles: array<Particle,100>
+}
+@group(0) @binding(0) var<storage,read_write> system: System;
+
+@compute @workgroup_size(1)
+fn main() {
+  // Form a pointer to a specific Particle in storage memory.
+  let active_particle: ptr<storage,Particle> =
+      &system.particles[system.active_index];
+
+  let delta_position: vec3<f32> = (*active_particle).velocity * system.timestep;
+  let current_position: vec3<f32>  = (*active_particle).position;
+  (*active_particle).position = delta_position + current_position;
+}
+
+fn add_one(x: ptr<function,i32>) {
+  /* Update the locations for 'x' to contain the next higher integer value,
+     (or to wrap around to the largest negative i32 value).
+     On the left-hand side, unary '*' converts the pointer to a reference that
+     can then be assigned to. It has a read_write access mode, by default.
+     /* On the right-hand side:
+        - Unary '*' converts the pointer to a reference, with a read_write
+          access mode.
+        - The only matching type rule is for addition (+) and requires '*x' to
+          have type i32, which is the store type for '*x'.  So the Load Rule
+          applies and '*x' evaluates to the value stored in the memory for '*x'
+          at the time of evaluation, which is the i32 value for 0.
+        - Add 1 to 0, to produce a final value of 1 for the right-hand side. */
+     Store 1 into the memory for '*x'. */
+  *x = *x + 1;
+}
+
+@compute @workgroup_size(1)
+fn main() {
+  var i: i32 = 0;
+
+  // Modify the contents of 'i' so it will contain 1.
+  // Use unary '&' to get a pointer value for 'i'.
+  // This is a clear signal that the called function has access to the memory
+  // for 'i', and may modify it.
+  add_one(&i);
+  let one: i32 = i;  // 'one' has value 1.
+}
+
+struct S {
+    age: i32,
+    weight: f32
+}
+var<private> person: S;
+// Elsewhere, 'person' denotes the reference to the memory underlying the variable,
+// and will have type ref<private,S,read_write>.
+
+fn f() {
+    var uv: vec2<f32>;
+    // For the remainder of this function body, 'uv' denotes the reference
+    // to the memory underlying the variable, and will have type
+    // ref<function,vec2<f32>,read_write>.
+
+    // Evaluate the left-hand side of the assignment:
+    //   Evaluate 'uv.x' to yield a reference:
+    //   1. First evaluate 'uv', yielding a reference to the memory for
+    //      the 'uv' variable. The result has type ref<function,vec2<f32>,read_write>.
+    //   2. Then apply the '.x' vector access phrase, yielding a reference to
+    //      the memory for the first component of the vector pointed at by the
+    //      reference value from the previous step.
+    //      The result has type ref<function,f32,read_write>.
+    // Evaluating the right-hand side of the assignment yields the f32 value 1.0.
+    // Store the f32 value 1.0 into the storage memory locations referenced by uv.x.
+    uv.x = 1.0;
+
+    // Evaluate the left-hand side of the assignment:
+    //   Evaluate 'uv[1]' to yield a reference:
+    //   1. First evaluate 'uv', yielding a reference to the memory for
+    //      the 'uv' variable. The result has type ref<function,vec2<f32>,read_write>.
+    //   2. Then apply the '[1]' array index phrase, yielding a reference to
+    //      the memory for second component of the vector referenced from
+    //      the previous step.  The result has type ref<function,f32,read_write>.
+    // Evaluating the right-hand side of the assignment yields the f32 value 2.0.
+    // Store the f32 value 2.0 into the storage memory locations referenced by uv[1].
+    uv[1] = 2.0;
+
+    var m: mat3x2<f32>;
+    // When evaluating 'm[2]':
+    // 1. First evaluate 'm', yielding a reference to the memory for
+    //    the 'm' variable. The result has type ref<function,mat3x2<f32>,read_write>.
+    // 2. Then apply the '[2]' array index phrase, yielding a reference to
+    //    the memory for the third column vector pointed at by the reference
+    //    value from the previous step.
+    //    Therefore the 'm[2]' expression has type ref<function,vec2<f32>,read_write>.
+    // The 'let' declaration is for type vec2<f32>, so the declaration
+    // statement requires the initializer to be of type vec2<f32>.
+    // The Load Rule applies (because no other type rule can apply), and
+    // the evaluation of the initializer yields the vec2<f32> value loaded
+    // from the memory locations referenced by 'm[2]' at the time the declaration
+    // is executed.
+    let p_m_col2: vec2<f32> = m[2];
+
+    var A: array<i32,5>;
+    // When evaluating 'A[4]'
+    // 1. First evaluate 'A', yielding a reference to the memory for
+    //    the 'A' variable. The result has type ref<function,array<i32,5>,read_write>.
+    // 2. Then apply the '[4]' array index phrase, yielding a reference to
+    //    the memory for the fifth element of the array referenced by
+    //    the reference value from the previous step.
+    //    The result value has type ref<function,i32,read_write>.
+    // The let-declaration requires the right-hand-side to be of type i32.
+    // The Load Rule applies (because no other type rule can apply), and
+    // the evaluation of the initializer yields the i32 value loaded from
+    // the memory locations referenced by 'A[4]' at the time the declaration
+    // is executed.
+    let A_4_value: i32 = A[4];
+
+    // When evaluating 'person.weight'
+    // 1. First evaluate 'person', yielding a reference to the memory for
+    //    the 'person' variable declared at module scope.
+    //    The result has type ref<private,S,read_write>.
+    // 2. Then apply the '.weight' member access phrase, yielding a reference to
+    //    the memory for the second member of the memory referenced by
+    //    the reference value from the previous step.
+    //    The result has type ref<private,f32,read_write>.
+    // The let-declaration requires the right-hand-side to be of type f32.
+    // The Load Rule applies (because no other type rule can apply), and
+    // the evaluation of the initializer yields the f32 value loaded from
+    // the memory locations referenced by 'person.weight' at the time the
+    // declaration is executed.
+    let person_weight: f32 = person.weight;
+
+    // Alternatively, references can also be formed from pointers using
+    // the same syntax.
+
+    let uv_ptr = &uv;
+    // For the remainder of this function body, 'uv_ptr' denotes a pointer
+    // to the memory underlying 'uv', and will have the type
+    // ptr<function,vec2<f32>,read_write>.
+
+    // Evaluate the left-hand side of the assignment:
+    //   Evaluate '*uv_ptr' to yield a reference:
+    //   1. First evaluate 'uv_ptr', yielding a pointer to the memory for
+    //      the 'uv' variable. The result has type ptr<function,vec2<f32>,read_write>.
+    //   2. Then apply the indirection expression operator, yielding a
+    //      reference to memory for 'uv'.
+    // Evaluating the right-hand side of the assignment yields the vec2<f32> value (1.0, 2.0).
+    // Store the value (1.0, 2.0) into the storage memory locations referenced by uv.
+    *uv_ptr = vec2f(1.0, 2.0);
+
+    // Evaluate the left-hand side of the assignment:
+    //   Evaluate 'uv_ptr.x' to yield a reference:
+    //   1. First evaluate 'uv_ptr', yielding a pointer to the memory for
+    //      the 'uv' variable. The result has type ptr<function,vec2<f32>,read_write>.
+    //   2. Then apply the '.x' vector access phrase, yielding a reference to
+    //      the memory for the first component of the vector pointed at by the
+    //      reference value from the previous step.
+    //      The result has type ref<function,f32,read_write>.
+    // Evaluating the right-hand side of the assignment yields the f32 value 1.0.
+    // Store the f32 value 1.0 into the storage memory locations referenced by uv.x.
+    uv_ptr.x = 1.0;
+
+    // Evaluate the left-hand side of the assignment:
+    //   Evaluate 'uv_ptr[1]' to yield a reference:
+    //   1. First evaluate 'uv_ptr', yielding a pointer to the memory for
+    //      the 'uv' variable. The result has type ptr<function,vec2<f32>,read_write>.
+    //   2. Then apply the '[1]' array index phrase, yielding a reference to
+    //      the memory for second component of the vector referenced from
+    //      the previous step.  The result has type ref<function,f32,read_write>.
+    // Evaluating the right-hand side of the assignment yields the f32 value 2.0.
+    // Store the f32 value 2.0 into the storage memory locations referenced by uv[1].
+    uv_ptr[1] = 2.0;
+
+    let m_ptr = &m;
+    // When evaluating 'm_ptr[2]':
+    // 1. First evaluate 'm_ptr', yielding a pointer to the memory for
+    //    the 'm' variable. The result has type ptr<function,mat3x2<f32>,read_write>.
+    // 2. Then apply the '[2]' array index phrase, yielding a reference to
+    //    the memory for the third column vector pointed at by the reference
+    //    value from the previous step.
+    //    Therefore the 'm[2]' expression has type ref<function,vec2<f32>,read_write>.
+    // The 'let' declaration is for type vec2<f32>, so the declaration
+    // statement requires the initializer to be of type vec2<f32>.
+    // The Load Rule applies (because no other type rule can apply), and
+    // the evaluation of the initializer yields the vec2<f32> value loaded
+    // from the memory locations referenced by 'm[2]' at the time the declaration
+    // is executed.
+    let p_m_col2: vec2<f32> = m_ptr[2];
+
+    let A_Ptr = &A;
+    // When evaluating 'A[4]'
+    // 1. First evaluate 'A', yielding a pointer to the memory for
+    //    the 'A' variable. The result has type ptr<function,array<i32,5>,read_write>.
+    // 2. Then apply the '[4]' array index phrase, yielding a reference to
+    //    the memory for the fifth element of the array referenced by
+    //    the reference value from the previous step.
+    //    The result value has type ref<function,i32,read_write>.
+    // The let-declaration requires the right-hand-side to be of type i32.
+    // The Load Rule applies (because no other type rule can apply), and
+    // the evaluation of the initializer yields the i32 value loaded from
+    // the memory locations referenced by 'A[4]' at the time the declaration
+    // is executed.
+    let A_4_value: i32 = A_ptr[4];
+
+    let person_ptr = &person;
+    // When evaluating 'person.weight'
+    // 1. First evaluate 'person_ptr', yielding a pointer to the memory for
+    //    the 'person' variable declared at module scope.
+    //    The result has type ptr<private,S,read_write>.
+    // 2. Then apply the '.weight' member access phrase, yielding a reference to
+    //    the memory for the second member of the memory referenced by
+    //    the reference value from the previous step.
+    //    The result has type ref<private,f32,read_write>.
+    // The let-declaration requires the right-hand-side to be of type f32.
+    // The Load Rule applies (because no other type rule can apply), and
+    // the evaluation of the initializer yields the f32 value loaded from
+    // the memory locations referenced by 'person.weight' at the time the
+    // declaration is executed.
+    let person_weight: f32 = person_ptr.weight;
+}
+
+// Declare a variable in the private address space, for storing an f32 value.
+var<private> x: f32;
+
+fn f() {
+    // Declare a variable in the function address space, for storing an i32 value.
+    var y: i32;
+
+    // The name 'x' resolves to the module-scope variable 'x',
+    // and has reference type ref<private,f32,read_write>.
+    // Applying the unary '&' operator converts the reference to a pointer.
+    // The access mode is the same as the access mode of the original variable, so
+    // the fully specified type is ptr<private,f32,read_write>.  But read_write
+    // is the default access mode for function address space, so read_write does not
+    // have to be spelled in this case
+    let x_ptr: ptr<private,f32> = &x;
+
+    // The name 'y' resolves to the function-scope variable 'y',
+    // and has reference type ref<private,i32,read_write>.
+    // Applying the unary '&' operator converts the reference to a pointer.
+    // The access mode defaults to 'read_write'.
+    let y_ptr: ptr<function,i32> = &y;
+
+    // A new variable, distinct from the variable declared at module scope.
+    var x: u32;
+
+    // Here, the name 'x' resolves to the function-scope variable 'x' declared in
+    // the previous statement, and has type ref<function,u32,read_write>.
+    // Applying the unary '&' operator converts the reference to a pointer.
+    // The access mode defaults to 'read_write'.
+    let inner_x_ptr: ptr<function,u32> = &x;
+}
+
+alias Arr = array<i32, 5>;
+
+alias RTArr = array<vec4<f32>>;
+
+alias single = f32;     // Declare an alias for f32
+const pi_approx: single = 3.1415;
+fn two_pi() -> single {
+  return single(2) * pi_approx;
+}
+
+const a = 4;                  // AbstractInt with a value of 4.
+const b : i32 = 4;            // i32 with a value of 4.
+const c : u32 = 4;            // u32 with a value of 4.
+const d : f32 = 4;            // f32 with a value of 4.
+const e = vec3(a, a, a);      // vec3 of AbstractInt with a value of (4, 4, 4).
+const f = 2.0;                // AbstractFloat with a value of 2.
+const g = mat2x2(a, f, a, f); // mat2x2 of AbstractFloat with a value of:
+                              // ((4.0, 2.0), (4.0, 2.0)).
+                              // The AbstractInt a converts to AbstractFloat.
+                              // An AbstractFloat cannot convert to AbstractInt.
+const h = array(a, f, a, f);  // array of AbstractFloat with 4 components:
+                              // (4.0, 2.0, 4.0, 2.0).
+
+@id(0)    override has_point_light: bool = true;  // Algorithmic control
+@id(1200) override specular_param: f32 = 2.3;     // Numeric control
+@id(1300) override gain: f32;                     // Must be overridden
+          override width: f32 = 0.0;              // Specified at the API level using
+                                                  // the name "width".
+          override depth: f32;                    // Specified at the API level using
+                                                  // the name "depth".
+                                                  // Must be overridden.
+          override height = 2 * depth;            // The default value
+                                                  // (if not set at the API level),
+                                                  // depends on another
+                                                  // overridable constant.
+
+fn bar() {
+// 'blockSize' denotes the i32 value 1024.
+let blockSize: i32 = 1024;
+
+// 'row_size' denotes the u32 value 16u.  The type is inferred.
+let row_size = 16u;
+
+var i: i32;         // Initial value is 0.  Not recommended style.
+loop {
+  var twice: i32 = 2 * i;   // Re-evaluated each iteration.
+  i++;
+  if i == 5 { break; }
+}
+
+var x: f32 = 1.0;
+let y = x * x + x + 1;
+}
+
+var<private> decibels: f32;
+var<workgroup> worklist: array<i32,10>;
+
+struct Params {
+  specular: f32,
+  count: i32
+}
+
+// Uniform buffer. Always read-only, and has more restrictive layout rules.
+@group(0) @binding(2)
+var<uniform> param: Params;    // A uniform buffer
+
+// A storage buffer, for reading and writing
+@group(0) @binding(0)
+var<storage,read_write> pbuf: array<vec2<f32>>;
+
+// Textures and samplers are always in "handle" space.
+@group(0) @binding(1)
+var filter_params: sampler;
+
+// Storage buffers
+@group(0) @binding(0)
+var<storage,read> buf1: Buffer;       // Can read, cannot write.
+@group(0) @binding(0)
+var<storage> buf2: Buffer;            // Can read, cannot write.
+@group(0) @binding(1)
+var<storage,read_write> buf3: Buffer; // Can both read and write.
+
+struct ParamsTable {weight: f32}
+
+// Uniform buffer. Always read-only, and has more restrictive layout rules.
+@group(0) @binding(2)
+var<uniform> params: ParamsTable;     // Can read, cannot write.
+
+fn f() {
+   var<function> count: u32;  // A variable in function address space.
+   var delta: i32;            // Another variable in the function address space.
+   var sum: f32 = 0.0;        // A function address space variable with initializer.
+   var pi = 3.14159;          // Infer the f32 store type from the initializer.
+}
+
+fn fun() {
+   var extracted_values: array<i32,2>;
+   const v = vec2<i32>(0,1);
+
+   for (var i: i32 = 0; i < 2 ; i++) {
+      // A runtime-expression used to index a vector, but outside the
+      // indexing bounds of the vector, produces an indeterminate value
+      // of the vector component type.
+      let extract = v[i+5];
+
+      // Now 'extract' is any value of type i32.
+
+      // Save it for later.
+      extracted_values[i] = extract;
+
+      if extract == extract {
+         // This is always executed
+      }
+      if extract < 2 {
+         // This might be executed, but might not be executed.
+         // Even though the original vector components are 0 and 1,
+         // the extracted value might not be either of those values.
+      }
+   }
+   if extracted_values[0] == extracted_values[1] {
+      // This might be executed, but might not be executed.
+   }
+}
+
+fn float_fun(runtime_index: u32) {
+   const v = vec2<f32>(0,1); // A vector of floating point values
+
+   // As in the previous example, 'float_extract' is an indeterminate value.
+   // Since it is a floating point type, it may be a NaN.
+   let float_extract: f32 = v[runtime_index+5];
+
+   if float_extract == float_extract {
+      // This *might not* be executed, because:
+      //  -  'float_extract' may be NaN, and
+      //  -  a NaN is never equal to any other floating point number,
+      //     even another NaN.
+   }
+}
+
+var a: vec3<f32> = vec3<f32>(1., 2., 3.);
+var b: f32 = a.y;          // b = 2.0
+var c: vec2<f32> = a.bb;   // c = (3.0, 3.0)
+var d: vec3<f32> = a.zyx;  // d = (3.0, 2.0, 1.0)
+var e: f32 = a[1];         // e = 2.0
+
+fn bar () {
+let a = x & (y ^ (z | w)); // Invalid: x & y ^ z | w
+let b = (x + y) << (z >= w); // Invalid: x + y << z >= w
+let c = x < (y > z); // Invalid: x < y > z
+let d = x && (y || z); // Invalid: x && y || z
+}
+
+struct S {
+    age: i32,
+    weight: f32
+}
+var<private> person: S;
+
+fn f() {
+    var a: i32 = 20;
+    a = 30;           // Replace the contents of 'a' with 30.
+
+    person.age = 31;  // Write 31 into the age field of the person variable.
+
+    var uv: vec2<f32>;
+    uv.y = 1.25;      // Place 1.25 into the second component of uv.
+
+    let uv_x_ptr: ptr<function,f32> = &uv.x;
+    *uv_x_ptr = 2.5;  // Place 2.5 into the first component of uv.
+
+    var sibling: S;
+    // Copy the contents of the 'person' variable into the 'sibling' variable.
+    sibling = person;
+}
+
+var<private> counter: i32;
+
+fn increment_and_yield_previous() -> i32 {
+  let previous = counter;
+  counter = counter + 1;
+  return previous;
+}
+
+fn user() {
+  // Increment the counter, but don't use the result.
+  _ = increment_and_yield_previous();
+}
+
+struct BufferContents {
+    counter: atomic<u32>,
+    data: array<vec4<f32>>
+}
+@group(0) @binding(0) var<storage> buf: BufferContents;
+@group(0) @binding(1) var t: texture_2d<f32>;
+@group(0) @binding(2) var s: sampler;
+
+@fragment
+fn shade_it() -> @location(0) vec4<f32> {
+  // Declare that buf, t, and s are part of the shader interface, without
+  // using them for anything.
+  _ = &buf;
+  _ = t;
+  _ = s;
+  return vec4<f32>();
+}
+
+var<private> next_item: i32 = 0;
+
+fn advance_item() -> i32 {
+   next_item += 1;   // Adds 1 to next_item.
+   return next_item - 1;
+}
+
+fn bump_item() {
+  var data: array<f32,10>;
+  next_item = 0;
+  // Adds 5.0 to data[0], calling advance_item() only once.
+  data[advance_item()] += 5.0;
+  // next_item will be 1 here.
+}
+
+fn precedence_example() {
+  var value = 1;
+  // The right-hand side of a compound assignment is its own expression.
+  value *= 2 + 3; // Same as value = value * (2 + 3);
+  // 'value' now holds 5.
+}
+
+fn f() {
+    var a: i32 = 20;
+    a++;
+    // Now a contains 21
+    a--;
+    // Now a contains 20
+}
+
+fn bar() {
+var a : i32;
+let x : i32 = generateValue();
+switch x {
+  case 0: {      // The colon is optional
+    a = 1;
+  }
+  default {      // The default need not appear last
+    a = 2;
+  }
+  case 1, 2, {   // Multiple selector values can be used
+    a = 3;
+  }
+  case 3, {      // The trailing comma is optional
+    a = 4;
+  }
+  case 4 {
+    a = 5;
+  }
+}
+
+const c = 2;
+var a : i32;
+let x : i32 = generateValue();
+switch x {
+  case 0: {
+    a = 1;
+  }
+  case 1, c {       // Const-expression can be used in case selectors
+    a = 3;
+  }
+  case 3, default { // The default keyword can be used with other clauses
+    a = 4;
+  }
+}
+}
+
+fn bar() {
+var a: i32 = 2;
+var i: i32 = 0;      // <1>
+loop {
+  if i >= 4 { break; }
+
+  a = a * 2;
+
+  i++;
+}
+var a: i32 = 2;
+var i: i32 = 0;
+loop {
+  if i >= 4 { break; }
+
+  let step: i32 = 1;
+
+  i = i + step;
+  if i % 2 == 0 { continue; }
+
+  a = a * 2;
+}
+var a: i32 = 2;
+var i: i32 = 0;
+loop {
+  if i >= 4 { break; }
+
+  let step: i32 = 1;
+
+  if i % 2 == 0 { continue; }
+
+  a = a * 2;
+
+  continuing {   // <2>
+    i = i + step;
+  }
+}
+var a: i32 = 2;
+for (var i: i32 = 0; i < 4; i++) {
+  if a == 0 {
+    continue;
+  }
+  a = a + 2;
+}
+
+var a: i32 = 2;
+{ // Introduce new scope for loop variable i
+  var i: i32 = 0;
+  loop {
+    if !(i < 4) {
+      break;
+    }
+
+    if a == 0 {
+      continue;
+    }
+    a = a + 2;
+
+    continuing {
+      i++;
+    }
+  }
+}
+var a: i32 = 2;
+var i: i32 = 0;
+loop {
+  let step: i32 = 1;
+
+  if i % 2 == 0 { continue; }
+
+  a = a * 2;
+
+  continuing {
+    i = i + step;
+    if i >= 4 { break; } // Invalid.  Use break-if instead.
+  }
+}
+var a: i32 = 2;
+var i: i32 = 0;
+loop {
+  let step: i32 = 1;
+
+  if i % 2 == 0 { continue; }
+
+  a = a * 2;
+
+  continuing {
+    i = i + step;
+    break if i >= 4;
+  }
+}
+var i: i32 = 0;
+loop {
+  if i >= 4 { break; }
+  if i % 2 == 0 { continue; } // <3>
+
+  let step: i32 = 2;
+
+  continuing {
+    i = i + step;
+  }
+}
+
+}
+
+@group(0) @binding(0)
+var<storage, read_write> will_emit_color : u32;
+
+fn discard_if_shallow(pos: vec4<f32>) {
+  if pos.z < 0.001 {
+    // If this is executed, then the will_emit_color variable will
+    // never be set to 1 because helper invocations will not write
+    // to shared memory.
+    discard;
+  }
+  will_emit_color = 1;
+}
+
+@fragment
+fn main(@builtin(position) coord_in: vec4<f32>)
+  -> @location(0) vec4<f32>
+{
+  discard_if_shallow(coord_in);
+
+  // Set the value to 1 and emit red, but only if the helper function
+  // did not execute the discard statement.
+  will_emit_color = 1;
+  return vec4<f32>(1.0, 0.0, 0.0, 1.0);
+}
+
+const x = 1;
+const y = 2;
+const_assert x < y; // valid at module-scope.
+const_assert(y != 0); // parentheses are optional.
+
+fn foo() {
+  const z = x + y - 2;
+  const_assert z > 0; // valid in functions.
+  let a  = 3;
+  const_assert a != 0; // invalid, the expresion must be a const-expression.
+}
+
+fn simple() -> i32 {
+  var a: i32;
+  return 0;  // Behavior: {Return}
+  a = 1;     // Valid, statically unreachable code.
+             //   Statement behavior: {Next}
+             //   Overall behavior (due to sequential statements): {Return}
+  return 2;  // Valid, statically unreachable code. Behavior: {Return}
+} // Function behavior: {Return}
+
+fn nested() -> i32 {
+  var a: i32;
+  {             // The start of a compound statement.
+    a = 2;      // Behavior: {Next}
+    return 1;   // Behavior: {Return}
+  }             // The compound statement as a whole has behavior {Return}
+  a = 1;        // Valid, statically unreachable code.
+                //   Statement behavior: {Next}
+                //   Overall behavior (due to sequential statements): {Return}
+  return 2;     // Valid, statically unreachable code. Behavior: {Return}
+}
+
+fn if_example() {
+  var a: i32 = 0;
+  loop {
+    if a == 5 {
+      break;      // Behavior: {Break}
+    }             // Behavior of the whole if compound statement: {Break, Next},
+                  //   as the if has an implicit empty else
+    a = a + 1;    // Valid, as the previous statement had "Next" in its behavior
+  }
+}
+
+fn if_example() {
+  var a: i32 = 0;
+  loop {
+    if a == 5 {
+      break;      // Behavior: {Break}
+    } else {
+      continue;   // Behavior: {Continue}
+    }             // Behavior of the whole if compound statement: {Break, Continue}
+    a = a + 1;    // Valid, statically unreachable code.
+                  //   Statement behavior: {Next}
+                  //   Overall behavior: {Break, Continue}
+  }
+}
+
+fn if_example() {
+  var a: i32 = 0;
+  loop {
+    // if e1 s1 else if e2 s2 else s3
+    // is identical to
+    // if e1 else { if e2 s2 else s3 }
+    if a == 5 {
+      break;      // Behavior: {Break}
+    } else if a == 42 {
+      continue;   // Behavior: {Continue}
+    } else {
+      return;     // Behavior {Return}
+    }             // Behavior of the whole if compound statement:
+                  //   {Break, Continue, Return}
+  }               // Behavior of the whole loop compound statement {Next, Return}
+}                 // Behavior of the whole function {Next}
+
+fn switch_example() {
+  var a: i32 = 0;
+  switch a {
+    default: {
+      break;   // Behavior: {Break}
+    }
+  }            // Behavior: {Next}, as switch replaces Break by Next
+  a = 5;       // Valid, as the previous statement had Next in its behavior
+}
+
+fn invalid_infinite_loop() {
+  loop { }     // Behavior: { }.  Invalid because it's empty.
+}
+
+fn invalid_infinite_loop() {
+  loop {
+    discard; // Behavior { Next }.
+  }          // Invalid, behavior of the whole loop is { }.
+}
+
+fn conditional_continue() {
+  var a: i32;
+  loop {
+    if a == 5 { break; } // Behavior: {Break, Next}
+    if a % 2 == 1 {      // Valid, as the previous statement has Next in its behavior
+      continue;          // Behavior: {Continue}
+    }                    // Behavior: {Continue, Next}
+    a = a * 2;           // Valid, as the previous statement has Next in its behavior
+    continuing {         // Valid as the continuing statement has behavior {Next}
+                         //  which does not include any of:
+                         //  {Break, Continue, Return}
+      a = a + 1;
+    }
+  }                      // The loop as a whole has behavior {Next},
+                         //  as it absorbs "Continue" and "Next",
+                         //  then replaces "Break" with "Next"
+}
+
+fn redundant_continue_with_continuing() {
+  var a: i32;
+  loop {
+    if a == 5 { break; }
+    continue;   // Valid. This is redundant, branching to the next statement.
+    continuing {
+      a = a + 1;
+    }
+  }
+}
+
+fn continue_end_of_loop_body() {
+  for (var i: i32 = 0; i < 5; i++ ) {
+    continue;   // Valid. This is redundant,
+                //   branching to the end of the loop body.
+  }             // Behavior: {Next},
+                //   as loops absorb "Continue",
+                //   and "for" loops always add "Next"
+}
+
+fn missing_return () -> i32 {
+  var a: i32 = 0;
+  if a == 42 {
+    return a;       // Behavior: {Return}
+  }                 // Behavior: {Next, Return}
+}                   // Error: Next is invalid in the body of a
+                    //   function with a return type
+
+fn continue_out_of_loop () {
+  var a: i32 = 0;
+  if a > 0  {
+    continue;       // Behavior: {Continue}
+  }                 // Behavior: {Next, Continue}
+}                   // Error: Continue is invalid in the body of a function
+
+// Declare the add_two function.
+// It has two formal parameters, i and b.
+// It has a return type of i32.
+// It has a body with a return statement.
+fn add_two(i: i32, b: f32) -> i32 {
+  return i + 2;  // A formal parameter is available for use in the body.
+}
+
+// A compute shader entry point function, 'main'.
+// It has no specified return type.
+// It invokes the add_two function, and captures
+// the resulting value in the named value 'six'.
+@compute @workgroup_size(1)
+fn main() {
+   let six: i32 = add_two(4, 5.0);
+}
+
+const first_one = firstLeadingBit(1234 + 4567); // Evaluates to 12
+                                                // first_one has the type i32, because
+                                                // firstLeadingBit cannot operate on
+                                                // AbstractInt
+
+@id(1) override x : i32;
+override y = firstLeadingBit(x); // const-expressions can be
+                                 // used in override-expressions.
+                                 // firstLeadingBit(x) is not a
+                                 // const-expression in this context.
+
+fn foo() {
+  var a : array<i32, firstLeadingBit(257)>; // const-functions can be used in
+                                            // const-expressions if all their
+                                            // parameters are const-expressions.
+}
+
+fn bar(p : ptr<function, f32>) {
+}
+
+fn baz(p : ptr<private, i32>) {
+}
+
+fn bar2(p : ptr<function, f32>) {
+  let a = &*&*(p);
+
+  bar(p); // Valid
+  bar(a); // Valid
+}
+
+fn baz2(p : ptr<storage, f32>) {
+}
+
+struct S {
+  x : i32
+}
+
+@group(0) @binding(0)
+var<storage> ro_storage : f32;
+@group(0) @binding(1)
+var<storage, read_write> rw_storage : f32;
+
+var usable_priv : i32;
+var unusable_priv : array<i32, 4>;
+fn foo() {
+  var usable_func : f32;
+  var unusable_func : S;
+  var i32_func : i32;
+
+  let a_priv = &usable_priv;
+  let b_priv = a_priv;
+  let c_priv = &*&usable_priv;
+  let d_priv = &(unusable_priv.x);
+  let e_priv = d_priv;
+
+  let a_func = &usable_func;
+  let b_func = &unusable_func;
+  let c_func = &(*b_func)[0];
+  let d_func = c_func;
+  let e_func = &*a_func;
+
+  baz(&usable_priv); // Valid, address-of a variable.
+  baz(a_priv);       // Valid, effectively address-of a variable.
+  baz(b_priv);       // Valid, effectively address-of a variable.
+  baz(c_priv);       // Valid, effectively address-of a variable.
+  baz(d_priv);       // Valid, memory view has changed.
+  baz(e_priv);       // Valid, memory view has changed.
+  baz(&i32_func);    // Invalid, address space mismatch.
+
+  bar(&usable_func); // Valid, address-of a variable.
+  bar(c_func);       // Valid, memory view has changed.
+  bar(d_func);       // Valid, memory view has changed.
+  bar(e_func);       // Valid, effectively address-of a variable.
+
+  baz2(&ro_storage); // Valid, address-of a variable.
+  baz2(&rw_storage); // Invalid, access mode mismatch.
+}
+
+var<private> x : i32 = 0;
+
+fn f1(p1 : ptr<function, i32>, p2 : ptr<function, i32>) {
+  *p1 = *p2;
+}
+
+fn f2(p1 : ptr<function, i32>, p2 : ptr<function, i32>) {
+  f1(p1, p2);
+}
+
+fn f3() {
+  var a : i32 = 0;
+  f2(&a, &a);  // Invalid. Cannot pass two pointer parameters
+               // with the same root identifier when one or
+               // more are written (even by a subfunction).
+}
+
+fn f4(p1 : ptr<function, i32>, p2 : ptr<function, i32>) -> i32 {
+  return *p1 + *p2;
+}
+
+fn f5() {
+  var a : i32 = 0;
+  let b = f4(&a, &a); // Valid. p1 and p2 in f4 are both only read.
+}
+
+fn f6(p : ptr<private, i32>) {
+  x = *p;
+}
+
+fn f7(p : ptr<private, i32>) -> i32 {
+  return x + *p;
+}
+
+fn f8() {
+  let a = f6(&x); // Invalid. x is written as a global variable and
+                  // read as a parameter.
+  let b = f7(&x); // Valid. x is only read as both a parameter and
+                  // a variable.
+}
+
+@vertex
+fn vert_main() -> @builtin(position) vec4<f32> {
+  return vec4<f32>(0.0, 0.0, 0.0, 1.0);
+}
+
+@fragment
+fn frag_main(@builtin(position) coord_in: vec4<f32>) -> @location(0) vec4<f32> {
+  return vec4<f32>(coord_in.x, coord_in.y, 0.0, 1.0);
+}
+
+@compute @workgroup_size(1)
+fn comp_main() { }
+
+@compute @workgroup_size(8,4,1)
+fn sorter() { }
+
+@compute @workgroup_size(8u)
+fn reverser() { }
+
+// Using an pipeline-overridable constant.
+@id(42) override block_width = 12u;
+@compute @workgroup_size(block_width)
+fn shuffler() { }
+
+// Error: workgroup_size must be specified on compute shader
+@compute
+fn bad_shader() { }
+
+struct VertexOutput {
+   @builtin(position) my_pos: vec4<f32>
+ }
+
+@vertex
+fn vs_main(
+   @builtin(vertex_index) my_index: u32,
+   @builtin(instance_index) my_inst_index: u32,
+) -> VertexOutput {}
+
+struct FragmentOutput {
+   @builtin(frag_depth) depth: f32,
+   @builtin(sample_mask) mask_out: u32
+}
+
+@fragment
+fn fs_main(
+   @builtin(front_facing) is_front: bool,
+   @builtin(position) coord: vec4<f32>,
+   @builtin(sample_index) my_sample_index: u32,
+   @builtin(sample_mask) mask_in: u32,
+) -> FragmentOutput {}
+
+@compute @workgroup_size(64)
+fn cs_main(
+   @builtin(local_invocation_id) local_id: vec3<u32>,
+   @builtin(local_invocation_index) local_index: u32,
+   @builtin(global_invocation_id) global_id: vec3<u32>,
+) {}
+
+struct A {
+  @location(0) x: f32,
+  // Despite locations being 16-bytes, x and y cannot share a location
+  @location(1) y: f32
+}
+
+// in1 occupies locations 0 and 1.
+// in2 occupies location 2.
+// The return value occupies location 0.
+@fragment
+fn fragShader(in1: A, @location(2) in2: f32) -> @location(0) vec4<f32> {
+ // ...
+}
+
+// Mixed builtins and user-defined inputs.
+struct MyInputs {
+  @location(0) x: vec4<f32>,
+  @builtin(front_facing) y: bool,
+  @location(1) @interpolate(flat) z: u32
+}
+
+struct MyOutputs {
+  @builtin(frag_depth) x: f32,
+  @location(0) y: vec4<f32>
+}
+
+@fragment
+fn fragShader(in1: MyInputs) -> MyOutputs {
+  // ...
+}
+
+struct A {
+  @location(0) x: f32,
+  // Invalid, x and y cannot share a location.
+  @location(0) y: f32
+}
+
+struct B {
+  @location(0) x: f32
+}
+
+struct C {
+  // Invalid, structures with user-defined IO cannot be nested.
+  b: B
+}
+
+struct D {
+  x: vec4<f32>
+}
+
+@fragment
+// Invalid, location cannot be applied to a structure type.
+fn fragShader1(@location(0) in1: D) {
+  // ...
+}
+
+@fragment
+// Invalid, in1 and in2 cannot share a location.
+fn fragShader2(@location(0) in1: f32, @location(0) in2: f32) {
+  // ...
+}
+
+@fragment
+// Invalid, location cannot be applied to a structure.
+fn fragShader3(@location(0) in1: vec4<f32>) -> @location(0) D {
+  // ...
+}
+
+@group(0) @binding(1) var<storage> weights: array<f32>;
+
+struct PointLight {                          //             align(16) size(32)
+  position : vec3f,                          // offset(0)   align(16) size(12)
+  // -- implicit member alignment padding -- // offset(12)            size(4)
+  color : vec3f,                             // offset(16)  align(16) size(12)
+  // -- implicit struct size padding --      // offset(28)            size(4)
+}
+
+struct LightStorage {                        //             align(16)
+  pointCount : u32,                          // offset(0)   align(4)  size(4)
+  // -- implicit member alignment padding -- // offset(4)             size(12)
+  point : array<PointLight>,                 // offset(16)  align(16) elementsize(32)
+}
+
+@group(0) @binding(1) var<storage> lights : LightStorage;
+
+struct A {                                     //             align(8)  size(24)
+    u: f32,                                    // offset(0)   align(4)  size(4)
+    v: f32,                                    // offset(4)   align(4)  size(4)
+    w: vec2<f32>,                              // offset(8)   align(8)  size(8)
+    x: f32                                     // offset(16)  align(4)  size(4)
+    // -- implicit struct size padding --      // offset(20)            size(4)
+}
+
+struct B {                                     //             align(16) size(160)
+    a: vec2<f32>,                              // offset(0)   align(8)  size(8)
+    // -- implicit member alignment padding -- // offset(8)             size(8)
+    b: vec3<f32>,                              // offset(16)  align(16) size(12)
+    c: f32,                                    // offset(28)  align(4)  size(4)
+    d: f32,                                    // offset(32)  align(4)  size(4)
+    // -- implicit member alignment padding -- // offset(36)            size(4)
+    e: A,                                      // offset(40)  align(8)  size(24)
+    f: vec3<f32>,                              // offset(64)  align(16) size(12)
+    // -- implicit member alignment padding -- // offset(76)            size(4)
+    g: array<A, 3>,    // element stride 24       offset(80)  align(8)  size(72)
+    h: i32                                     // offset(152) align(4)  size(4)
+    // -- implicit struct size padding --      // offset(156)           size(4)
+}
+
+@group(0) @binding(0)
+var<storage,read_write> storage_buffer: B;
+
+struct A {                                     //             align(8)  size(32)
+    u: f32,                                    // offset(0)   align(4)  size(4)
+    v: f32,                                    // offset(4)   align(4)  size(4)
+    w: vec2<f32>,                              // offset(8)   align(8)  size(8)
+    @size(16) x: f32                           // offset(16)  align(4)  size(16)
+}
+
+struct B {                                     //             align(16) size(208)
+    a: vec2<f32>,                              // offset(0)   align(8)  size(8)
+    // -- implicit member alignment padding -- // offset(8)             size(8)
+    b: vec3<f32>,                              // offset(16)  align(16) size(12)
+    c: f32,                                    // offset(28)  align(4)  size(4)
+    d: f32,                                    // offset(32)  align(4)  size(4)
+    // -- implicit member alignment padding -- // offset(36)            size(12)
+    @align(16) e: A,                           // offset(48)  align(16) size(32)
+    f: vec3<f32>,                              // offset(80)  align(16) size(12)
+    // -- implicit member alignment padding -- // offset(92)            size(4)
+    g: array<A, 3>,    // element stride 32       offset(96)  align(8)  size(96)
+    h: i32                                     // offset(192) align(4)  size(4)
+    // -- implicit struct size padding --      // offset(196)           size(12)
+}
+
+@group(0) @binding(0)
+var<uniform> uniform_buffer: B;
+
+// Array where:
+//   - alignment is 4 = AlignOf(f32)
+//   - element stride is 4 = roundUp(AlignOf(f32),SizeOf(f32)) = roundUp(4,4)
+//   - size is 32 = stride * number_of_elements = 4 * 8
+var small_stride: array<f32, 8>;
+
+// Array where:
+//   - alignment is 16 = AlignOf(vec3<f32>) = 16
+//   - element stride is 16 = roundUp(AlignOf(vec3<f32>), SizeOf(vec3<f32>))
+//                          = roundUp(16,12)
+//   - size is 128 = stride * number_of_elements = 16 * 8
+var bigger_stride: array<vec3<f32>, 8>;
+
+// Array where:
+//   - alignment is 4 = AlignOf(f32)
+//   - element stride is 4 = roundUp(AlignOf(f32),SizeOf(f32)) = 4
+// If B is the effective buffer binding size for the binding on the
+// draw or dispatch command, the number of elements is:
+//   N_runtime = floor(B / element stride) = floor(B / 4)
+@group(0) @binding(0)
+var<storage> weights: array<f32>;
+
+// Array where:
+//   - alignment is 16 = AlignOf(vec3<f32>) = 16
+//   - element stride is 16 = roundUp(AlignOf(vec3<f32>), SizeOf(vec3<f32>))
+//                          = roundUp(16,12)
+// If B is the effective buffer binding size for the binding on the
+// draw or dispatch command, the number of elements is:
+//   N_runtime = floor(B / element stride) = floor(B / 16)
+var<storage> directions: array<vec3<f32>>;
+
+struct S {
+  x: f32
+}
+struct Invalid {
+  a: S,
+  b: f32 // invalid: offset between a and b is 4 bytes, but must be at least 16
+}
+@group(0) @binding(0) var<uniform> invalid: Invalid;
+
+struct Valid {
+  a: S,
+  @align(16) b: f32 // valid: offset between a and b is 16 bytes
+}
+@group(0) @binding(1) var<uniform> valid: Valid;
+
+struct small_stride {
+  a: array<f32,8> // stride 4
+}
+// Invalid, stride must be a multiple of 16
+@group(0) @binding(0) var<uniform> invalid: small_stride;
+
+struct wrapped_f32 {
+  @size(16) elem: f32
+}
+struct big_stride {
+  a: array<wrapped_f32,8> // stride 16
+}
+@group(0) @binding(1) var<uniform> valid: big_stride;     // Valid
+
+struct S {
+  a : f32,
+  b : u32,
+  c : f32
+}
+
+@group(0) @binding(0)
+var<storage> v : S;
+
+fn foo() {
+  let x = v.b; // Does not access memory locations for v.a or v.c.
+}
+
+fn foo(p : ptr<function, array<f32, 4>>, i : i32) -> f32 {
+  let p1 = p;
+  var x = i;
+  let p2 = &((*p1)[x]);
+  x = 0;
+  *p2 = 5;
+  return (*p1)[x];
+}
+
+// This is the equivalent version of foo for the analysis.
+fn foo_for_analysis(p : ptr<function, array<f32, 4>>, i : i32) -> f32 {
+  var p_var = *p;            // Introduce variable for p.
+  let p1 = &p_var;           // Use the variable for p1
+  var x = i;
+  let x_tmp1 = x;            // Capture value of x
+  let p2 = &(p_var[x_tmp1]); // Substitute p1's initializer
+  x = 0;
+  *(&(p_var[x_tmp1])) = 5;   // Substitute p2's initializer
+  return (*(&p_var))[x];     // Substitute p1's initializer
+}
+
+@group(0) @binding(0) var t : texture_2d<f32>;
+@group(0) @binding(1) var s : sampler;
+
+@fragment
+fn main(@builtin(position) pos : vec4<f32>) {
+  if (pos.x < 0.5) {
+    // Invalid textureSample function call.
+    _ = textureSample(t, s, pos.xy);
+  }
+}
+
+@group(0) @binding(0) var<storage, read_write> a : i32;
+@group(0) @binding(1) var<uniform> b : i32;
+
+@compute @workgroup_size(16,1,1)
+fn main() {
+  var x : i32;
+  x = a;
+  if x > 0 {
+    // Invalid barrier function call.
+    workgroupBarrier();
+  }
+  x = b;
+  if x < 0 {
+    // Valid barrier function call.
+    storageBarrier();
+  }
+}
+
+struct Inputs {
+  // workgroup_id is a uniform built-in value.
+  @builtin(workgroup_id) wgid : vec3<u32>,
+  // local_invocation_index is a non-uniform built-in value.
+  @builtin(local_invocation_index) lid : u32
+}
+
+@compute @workgroup_size(16,1,1)
+fn main(inputs : Inputs) {
+  // This comparison is always uniform,
+  // but the analysis cannot determine that.
+  if inputs.wgid.x == 1 {
+    workgroupBarrier();
+  }
+}
+
+@compute @workgroup_size(16,1,1)
+fn main(@builtin(workgroup_id) wgid : vec3<u32>,
+        @builtin(local_invocation_index) lid : u32) {
+  // The uniformity analysis can now correctly determine this comparison is
+  // always uniform.
+  if wgid.x == 1 {
+    // Valid barrier function call.
+    workgroupBarrier();
+  }
+}
+
+@compute @workgroup_size(16,1,1)
+fn main(@builtin(local_invocation_index) lid : u32) {
+  for (var i = 0u; i < 10; i++) {
+    workgroupBarrier();
+    if (lid + i) > 7 {
+      break;
+    }
+  }
+}
+
+fn scale(in1 : f32, in2 : f32) -> f32 {
+  let v = in1 / in2;
+  return v;
+}
+
+@group(0) @binding(0) var t : texture_2d<f32>;
+@group(0) @binding(1) var s : sampler;
+
+@fragment
+fn main(@builtin(position) pos : vec4<f32>) {
+  let tmp = scale(pos.x, 0.5);
+  if tmp > 1.0 {
+    _ = textureSample(t, s, pos.xy);
+  }
+}
+
+fn bar() {
+vec2<f32>();                 // The zero-valued vector of two f32 components.
+vec2<f32>(0.0, 0.0);         // The same value, written explicitly.
+
+vec3<i32>();                 // The zero-valued vector of three i32 components.
+vec3<i32>(0, 0, 0);          // The same value, written explicitly.
+
+}
+
+struct Student {
+  grade: i32,
+  GPA: f32,
+  attendance: array<bool,4>
+}
+
+fn func() {
+  var s: Student;
+
+  // The zero value for Student
+  s = Student();
+
+  // The same value, written explicitly.
+  s = Student(0, 0.0, array<bool,4>(false, false, false, false));
+
+  // The same value, written with zero-valued members.
+  s = Student(i32(), f32(), array<bool,4>());
+
+// Infers result type
+let fraction_and_exponent = frexp(1.5);
+// Sets fraction_only to 0.75
+let fraction_only = frexp(1.5).fract;
+}
+
+struct PointLight {
+  position : vec3f,
+  color : vec3f,
+}
+
+struct LightStorage {
+  pointCount : u32,
+  point : array<PointLight>,
+}
+
+@group(0) @binding(1) var<storage> lights : LightStorage;
+
+fn num_point_lights() -> u32 {
+  return arrayLength( &lights.point );
+}
+
+// Infers result type
+const fraction_and_exponent = frexp(1.5);
+// Sets fraction_only to 0.75
+const fraction_only = frexp(1.5).fract;
+
+fn bar() {
+// Infers result type
+let fract_and_whole = modf(1.5);
+// Sets fract_only to 0.5
+let fract_only = modf(1.5).fract;
+// Sets whole_only to 1.0
+let whole_only = modf(1.5).whole;
+}
+
+// Infers result type
+const fract_and_whole = modf(1.5);
+// Sets fract_only to 0.5
+const fract_only = modf(1.5).fract;
+// Sets whole_only to 1.0
+const whole_only = modf(1.5).whole;
+
+@group(0) @binding(0) var t: texture_2d<f32>;
+@group(0) @binding(1) var dt: texture_depth_2d;
+@group(0) @binding(2) var s: sampler;
+
+fn gather_x_components(c: vec2<f32>) -> vec4<f32> {
+  return textureGather(0,t,s,c);
+}
+fn gather_y_components(c: vec2<f32>) -> vec4<f32> {
+  return textureGather(1,t,s,c);
+}
+fn gather_z_components(c: vec2<f32>) -> vec4<f32> {
+  return textureGather(2,t,s,c);
+}
+fn gather_depth_components(c: vec2<f32>) -> vec4<f32> {
+  return textureGather(dt,s,c);
+}
+
+@group(0) @binding(0) var dt: texture_depth_2d;
+@group(0) @binding(1) var s: sampler;
+
+fn gather_depth_compare(c: vec2<f32>, depth_ref: f32) -> vec4<f32> {
+  return textureGatherCompare(dt,s,c,depth_ref);
+}

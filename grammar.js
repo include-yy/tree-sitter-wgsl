@@ -4,16 +4,16 @@
  * @license MIT
  */
 
-
+// steal from tree-sitter-rust's op precedence
+// OP may not be totally orderd, see the link below
+// https://www.w3.org/TR/2024/WD-WGSL-20240205/#operator-precedence-associativity
 const PREC = {
-    //call: 15,
-    //field: 14,
-    unary: 11,
-    mul: 10,
-    add: 9,
-    shift : 8,
-    cmp : 7,
-    equal: 6,
+    call: 11,
+    unary: 10,
+    mul: 9,
+    add: 8,
+    shift : 7,
+    cmp : 6,
     bitand: 5,
     bitxor: 4,
     bitor: 3,
@@ -181,14 +181,15 @@ module.exports = grammar({
 	    optional(seq('=', field('value', $._expression)))),
 	// $8.18
 	_expression: $ => choice(
-	    $.binary_expression,
-	    $._literal,
 	    $.identifier,
 	    $.template_ident,
 	    $.call_expression,
+	    $._literal,
 	    $.paren_expression,
 	    $.unary_expression,
-	    $.singular_expression,
+	    $.index_expression,
+	    $.field_expression,
+	    $.binary_expression,
 	),
 	call_expression: $ => seq(
 	    field('function', $.template_ident),
@@ -196,48 +197,28 @@ module.exports = grammar({
 	),
 	argument_expression_list: $ => seq('(', commaSep($._expression), ')'),
 	paren_expression: $ => seq('(', $._expression, ')'),
-	component_or_swizzle_specifier: $ => prec.left(PREC.unary, seq(
-	    choice(
-		field('index', seq('[', $._expression, ']')),
-		field('field', seq('.', $.identifier)),
-	    ),
-	    optional($.component_or_swizzle_specifier),
+	unary_expression: $ => prec(PREC.unary, seq(
+	    token(choice('-', '!', '~', '*', '&')),
+	    $._expression,
 	)),
-	unary_expression: $ => prec.left(PREC.unary,
-	    seq(
-		field('operator', token(choice('-', '!', '~', '*', '&'))),
-		field('argument', $._expression),
-	    )
-	),
-	singular_expression: $ => seq(
-	    choice(
-		$.template_ident,
-		$.call_expression,
-		$._literal,
-		$.paren_expression,
-	    ),
-	    $.component_or_swizzle_specifier,
-	),
+	index_expression: $ => prec(PREC.call, seq(
+	    $._expression, '[', $._expression, ']',
+	)),
+	field_expression: $ => prec(PREC.call, seq(
+	    field('value', $._expression),
+	    '.',
+	    field('field', $.identifier),
+	)),
 	binary_expression: $ => {
 	    const table = [
-		['||', PREC.or],
-		['&&', PREC.and],
-		['|', PREC.bitor],
-		['^', PREC.bitxor],
-		['&', PREC.bitand],
-		['==', PREC.equal],
-		['!=', PREC.equal],
-		['<', PREC.cmp],
-		['>', PREC.cmp],
-		['<=', PREC.cmp],
-		['>=', PREC.cmp],
-		['<<', PREC.shift],
-		['>>', PREC.shift],
-		['+', PREC.add],
-		['-', PREC.add],
-		['*', PREC.mul],
-		['/', PREC.mul],
-		['%', PREC.mul],
+		['||', PREC.or], ['&&', PREC.and],
+		['|', PREC.bitor], ['^', PREC.bitxor], ['&', PREC.bitand],
+		['==', PREC.cmp], ['!=', PREC.cmp],
+		['<', PREC.cmp], ['>', PREC.cmp],
+		['<=', PREC.cmp], ['>=', PREC.cmp],
+		['<<', PREC.shift], ['>>', PREC.shift],
+		['+', PREC.add], ['-', PREC.add],
+		['*', PREC.mul], ['/', PREC.mul], ['%', PREC.mul],
 	    ];
 	    return choice(...table.map(([operator, precedence]) => {
 		return prec.left(precedence, seq(
@@ -247,15 +228,6 @@ module.exports = grammar({
 		));
 	    }));
 	},
-	lhs_expression: $ => seq(
-	    repeat(token(choice('*', '&'))),
-	    choice(
-		$.identifier,
-		seq('(', $.lhs_expression, ')'),
-	    ),
-	    optional($.component_or_swizzle_specifier),
-	),
-
 	//$9.1
 	compound_statement: $ => seq(
 	    repeat($.attribute),
@@ -266,7 +238,7 @@ module.exports = grammar({
 	//$9.2
 	assignment_statement: $ => choice(
             seq(
-		field('left', $.lhs_expression),
+		field('left', $._expression),
 		token(choice(
 		    '=', '+=', '-=', '*=',
 		    '/=', '%=', '&=', '|=',
@@ -276,8 +248,8 @@ module.exports = grammar({
 	    seq(field('left', '_'), '=', field('right', $._expression)),
         ),
 	//$9.3
-	increment_statement: $ => seq($.lhs_expression, '++'),
-        decrement_statement: $ => seq($.lhs_expression, '--'),
+	increment_statement: $ => seq($._expression, '++'),
+        decrement_statement: $ => seq($._expression, '--'),
 	//$9.4.1
 	if_statement: $ => seq(
 	    repeat($.attribute),
@@ -440,11 +412,6 @@ module.exports = grammar({
 	    field('name', seq($.identifier, optional(seq('.', $.identifier)))),
 	    $._attrib_end,
 	),
-	//$15.4
-	swizzle_name: $ => token(choice(
-	    /[rgba]{1,4}/,
-	    /[xyzw]{1,4}/,
-	)),
     }
 })
 

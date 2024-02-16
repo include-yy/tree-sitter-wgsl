@@ -153,3 +153,258 @@ const a = A<1.0f<2.0>;
      (float_literal)
      (float_literal))))))
 
+============================
+paren_expression expression0
+============================
+
+const a = (((((1)))));
+const a = (1) + (2);
+const a = (1 + 2) * 3;
+const a = 1 + 2 * 3;
+
+-------------------------
+
+(translation_unit
+ (global_const_decl
+  (identifier)
+  (paren_expression
+   (paren_expression
+    (paren_expression
+     (paren_expression
+      (paren_expression
+       (int_literal)))))))
+ (global_const_decl
+  (identifier)
+  (binary_expression
+   (paren_expression (int_literal))
+   (paren_expression (int_literal))))
+ (global_const_decl
+  (identifier)
+  (binary_expression
+   (paren_expression
+    (binary_expression (int_literal) (int_literal)))
+   (int_literal)))
+ (global_const_decl
+  (identifier)
+  (binary_expression
+   (int_literal)
+   (binary_expression (int_literal) (int_literal)))))
+
+============================
+unary_expression expression0
+============================
+
+const a = -1;
+const b = !true;
+const c = !!false;
+const d = ~1;
+const e = *e;
+const f = &f;
+const a = *&*&*&*&a;
+
+----------------------
+
+(translation_unit
+ (global_const_decl
+  (identifier)
+  (unary_expression (int_literal)))
+ (global_const_decl
+  (identifier)
+  (unary_expression (bool_literal)))
+ (global_const_decl
+  (identifier)
+  (unary_expression (unary_expression (bool_literal))))
+ (global_const_decl
+  (identifier)
+  (unary_expression (int_literal)))
+ (global_const_decl
+  (identifier)
+  (unary_expression (identifier)))
+ (global_const_decl
+  (identifier)
+  (unary_expression (identifier)))
+ (global_const_decl
+  (identifier)
+  (unary_expression
+   (unary_expression
+    (unary_expression
+     (unary_expression
+      (unary_expression
+       (unary_expression
+	(unary_expression
+	 (unary_expression
+	  (identifier)))))))))))
+
+=============================
+binary_expression expression0
+=============================
+
+const a = 1 + 2 * 3 - 4;
+const a = (1 + 2) * (3 - 4);
+const a = 1 / 2 / 3 / 4;
+const a = 1 << 2 << 3 >> 4;
+const a = 1 < (2 > 3) <= 4 >= (5 < 6);
+const a = 1 || 2 ^ 3 != 4 < 5 >> 6 + 7 * 8;
+
+-----------------------
+
+(translation_unit
+ (global_const_decl
+  (identifier)
+  (binary_expression
+   (binary_expression
+    (int_literal)
+    (binary_expression
+     (int_literal) (int_literal)))
+   (int_literal)))
+ (global_const_decl
+  (identifier)
+  (binary_expression
+   (paren_expression
+    (binary_expression
+     (int_literal) (int_literal)))
+   (paren_expression
+    (binary_expression
+     (int_literal) (int_literal)))))
+ (global_const_decl
+  (identifier)
+  (binary_expression
+   (binary_expression
+    (binary_expression
+     (int_literal)
+     (int_literal))
+    (int_literal))
+   (int_literal)))
+ (global_const_decl
+  (identifier)
+  (binary_expression
+   (binary_expression
+    (binary_expression
+     (int_literal)
+     (int_literal))
+    (int_literal))
+   (int_literal)))
+ (global_const_decl
+  (identifier)
+  (binary_expression
+   (binary_expression
+    (binary_expression
+     (int_literal)
+     (paren_expression
+      (binary_expression
+       (int_literal)
+       (int_literal))))
+    (int_literal))
+   (paren_expression
+    (binary_expression
+     (int_literal)
+     (int_literal)))))
+ (global_const_decl
+  (identifier)
+  (binary_expression
+   (int_literal)
+   (binary_expression
+    (int_literal)
+    (binary_expression
+     (binary_expression
+      (int_literal)
+      (int_literal))
+     (binary_expression
+      (int_literal)
+      (binary_expression
+       (int_literal)
+       (binary_expression
+	(int_literal)
+	(int_literal)))))))))
+
+============================
+index_expression expression0
+============================
+
+fn main() {
+let c = a[1][2];
+let c = a[1 + 2 / 1];
+let c = a[b[2]];
+}
+
+---------------------------
+
+(translation_unit
+ (function_decl
+  (identifier)
+  (compound_statement
+   (value_statement
+    (identifier)
+    (index_expression
+     (index_expression
+      (identifier) (int_literal))
+     (int_literal)))
+   (value_statement
+    (identifier)
+    (index_expression
+     (identifier)
+     (binary_expression
+      (int_literal)
+      (binary_expression
+       (int_literal) (int_literal)))))
+   (value_statement
+    (identifier)
+    (index_expression
+     (identifier)
+     (index_expression
+      (identifier) (int_literal)))))))
+
+============================
+field_expression expression0
+============================
+
+const a = a.x;
+const a = a.xyzz;
+const a = b.rgba;
+const a = sch.student;
+const a = sch.teacher.id;
+const a = sch.student[10].book.page[12];
+
+----------------------------------------
+
+(translation_unit
+ (global_const_decl
+  (identifier)
+  (field_expression
+   (identifier)
+   (identifier)))
+ (global_const_decl
+  (identifier)
+  (field_expression
+   (identifier)
+   (identifier)))
+ (global_const_decl
+  (identifier)
+  (field_expression
+   (identifier)
+   (identifier)))
+ (global_const_decl
+  (identifier)
+  (field_expression
+   (identifier)
+   (identifier)))
+ (global_const_decl
+  (identifier)
+  (field_expression
+   (field_expression
+    (identifier)
+    (identifier))
+   (identifier)))
+ (global_const_decl
+  (identifier)
+  (index_expression
+   (field_expression
+    (field_expression
+     (index_expression
+      (field_expression
+       (identifier)
+       (identifier))
+      (int_literal))
+     (identifier))
+    (identifier))
+   (int_literal))))

@@ -39,7 +39,6 @@ module.exports = grammar({
 
     inline: $ => [
 	$._literal,
-	$._variable_or_value_statement,
     ],
 
     conflicts: $ => [
@@ -122,7 +121,7 @@ module.exports = grammar({
 	    'diagnostic', '(',
 	    choice('error', 'warning', 'info', 'off'), ',',
 	    seq($.identifier, optional(seq('.', $.identifier))),
-	    optional(','), ')', ";",
+	    optional(','), ')', ';',
 	),
 	// $6.2.10
 	struct_decl: $ => seq(
@@ -147,10 +146,6 @@ module.exports = grammar({
 	    field('arguments', optional($.template_list)),
 	),
 	// $7.4
-	_variable_or_value_statement: $ => choice(
-	    $.variable_statement,
-	    $.value_statement,
-	),
 	variable_statement: $ => seq(
 	    $._variable_decl,
 	    optional(seq('=', field('value', $._expression)))
@@ -301,7 +296,8 @@ module.exports = grammar({
 	),
         for_header: $ => seq(
 	    optional(choice(
-		$._variable_or_value_statement,
+		$.variable_statement,
+		$.value_statement,
 		$.update_statement,
 		$.assignment_statement,
 		$.func_call_statement,
@@ -352,7 +348,8 @@ module.exports = grammar({
             $.while_statement,
 	    seq($.return_statement, ';'),
             seq($.func_call_statement, ';'),
-            seq($._variable_or_value_statement, ';'),
+            seq($.variable_statement, ';'),
+	    seq($.value_statement, ';'),
             seq($.break_statement, ';'),
             seq($.continue_statement, ';'),
             seq('discard', ';'),
@@ -389,7 +386,7 @@ module.exports = grammar({
 })
 
 function commaSep(rule) {
-  return optional(commaSep1(rule));
+    return optional(commaSep1(rule));
 }
 
 function commaSep1(rule) {

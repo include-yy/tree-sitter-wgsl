@@ -74,13 +74,13 @@ override height = 2 * depth;
  (global_const_decl (identifier) (float_literal))
  (global_const_decl (identifier) (bool_literal))
  (global_const_decl (identifier) (template_ident (identifier)) (bool_literal))
- (global_override_decl (attribute (int_literal))
+ (global_override_decl (attribute (identifier) (int_literal))
 		       (identifier) (template_ident (identifier))
 		       (bool_literal))
- (global_override_decl (attribute (int_literal))
+ (global_override_decl (attribute (identifier) (int_literal))
 		       (identifier) (template_ident (identifier))
 		       (float_literal))
- (global_override_decl (attribute (int_literal))
+ (global_override_decl (attribute (identifier) (int_literal))
 		       (identifier) (template_ident (identifier)))
  (global_override_decl (identifier) (template_ident (identifier)) (float_literal))
  (global_override_decl (identifier) (template_ident (identifier)))
@@ -107,50 +107,50 @@ var<private> c: array<i32,8u>;
 -------------------------------------
 
 (translation_unit
-  (global_variable_decl
-    (attribute (int_literal))
-    (attribute (int_literal))
-    (template_list
-     (template_ident
-      (identifier))
-     (template_ident
-      (identifier)))
-    (identifier)
-    (template_ident (identifier)))
-  (global_variable_decl
-    (attribute (int_literal))
-    (attribute (int_literal))
-    (template_list
-      (template_ident
-        (identifier)))
-    (identifier)
-    (template_ident (identifier)))
-  (global_variable_decl
-    (attribute (int_literal))
-    (attribute (int_literal))
-    (template_list
-     (template_ident (identifier))
-     (template_ident (identifier)))
-    (identifier)
-    (template_ident (identifier)))
-  (global_variable_decl
-    (attribute (int_literal))
-    (attribute (int_literal))
-    (template_list
-     (template_ident (identifier)))
-    (identifier)
-    (template_ident (identifier)))
-  (global_variable_decl (identifier) (int_literal))
-  (global_variable_decl (identifier) (int_literal))
-  (global_variable_decl (identifier) (float_literal))
-  (global_variable_decl
-   (identifier) (template_ident (identifier)) (int_literal))
-  (global_variable_decl
-   (template_list (template_ident (identifier)))
-   (identifier)
+ (global_variable_decl
+  (attribute (identifier) (int_literal))
+  (attribute (identifier) (int_literal))
+  (template_list
    (template_ident
-    (identifier) (template_list (template_ident (identifier))
-				(int_literal)))))
+    (identifier))
+   (template_ident
+    (identifier)))
+  (identifier)
+  (template_ident (identifier)))
+ (global_variable_decl
+  (attribute (identifier) (int_literal))
+  (attribute (identifier) (int_literal))
+  (template_list
+   (template_ident
+    (identifier)))
+  (identifier)
+  (template_ident (identifier)))
+ (global_variable_decl
+  (attribute (identifier) (int_literal))
+  (attribute (identifier) (int_literal))
+  (template_list
+   (template_ident (identifier))
+   (template_ident (identifier)))
+  (identifier)
+  (template_ident (identifier)))
+ (global_variable_decl
+  (attribute (identifier) (int_literal))
+  (attribute (identifier) (int_literal))
+  (template_list
+   (template_ident (identifier)))
+  (identifier)
+  (template_ident (identifier)))
+ (global_variable_decl (identifier) (int_literal))
+ (global_variable_decl (identifier) (int_literal))
+ (global_variable_decl (identifier) (float_literal))
+ (global_variable_decl
+  (identifier) (template_ident (identifier)) (int_literal))
+ (global_variable_decl
+  (template_list (template_ident (identifier)))
+  (identifier)
+  (template_ident
+   (identifier) (template_list (template_ident (identifier))
+			       (int_literal)))))
 
 ==================================
 const_assert_statement global_decl
@@ -219,7 +219,8 @@ struct ParamsTable {@id(1) weight: f32}
   (line_comment))
  (struct_decl
   (identifier)
-  (struct_member (attribute (int_literal)) (identifier) (template_ident (identifier)))))
+  (struct_member (attribute (identifier) (int_literal))
+  		 (identifier) (template_ident (identifier)))))
 
 =========================
 function_decl global_decl
@@ -239,40 +240,50 @@ fn computeMain(@builtin(global_invocation_id) cell: vec3u) {}
 ------------
 
 (translation_unit
-  (function_decl
+ (function_decl
+  (identifier)
+  (param_list
+   (param (identifier) (template_ident (identifier)))
+   (param (identifier) (template_ident (identifier))))
+  (template_ident (identifier))
+  (compound_statement))
+ (function_decl
+  (attribute (identifier))
+  (identifier)
+  (param_list
+   (param (attribute (identifier) (int_literal))
+	  (identifier) (template_ident (identifier)))
+   (param (attribute (identifier) (int_literal))
+	  (identifier) (template_ident (identifier)))
+   (param (attribute (identifier) (int_literal))
+	  (identifier) (template_ident (identifier))))
+  (attribute (identifier) (int_literal))
+  (template_ident (identifier))
+  (compound_statement))
+ (function_decl
+  (identifier)
+  (template_ident
+   (identifier)
+   (template_list (template_ident (identifier))))
+  (compound_statement))
+ (function_decl
+  (identifier)
+  (param_list
+   (param
     (identifier)
-    (param_list
-     (param (identifier) (template_ident (identifier)))
-     (param (identifier) (template_ident (identifier))))
-    (template_ident (identifier))
-    (compound_statement))
-  (function_decl
-   (attribute)
+    (template_ident
+     (identifier)
+     (template_list (int_literal) (int_literal)))))
+  (template_ident
    (identifier)
-   (param_list
-    (param (attribute (int_literal)) (identifier) (template_ident (identifier)))
-    (param (attribute (int_literal)) (identifier) (template_ident (identifier)))
-    (param (attribute (int_literal)) (identifier) (template_ident (identifier))))
-   (attribute (int_literal))
-   (template_ident (identifier))
-   (compound_statement))
-  (function_decl
-   (identifier)
-   (template_ident (identifier) (template_list (template_ident (identifier))))
-   (compound_statement))
-  (function_decl
-   (identifier)
-   (param_list
-    (param (identifier) (template_ident
-			 (identifier)
-			 (template_list (int_literal) (int_literal)))))
-   (template_ident (identifier) (template_list (int_literal) (int_literal)))
-   (compound_statement))
-  (function_decl (identifier) (compound_statement))
-  (function_decl
-   (attribute)
-   (attribute (int_literal) (int_literal))
-   (identifier)
-   (param_list
-    (param (attribute (identifier)) (identifier) (template_ident (identifier))))
-   (compound_statement)))
+   (template_list (int_literal) (int_literal)))
+  (compound_statement))
+ (function_decl (identifier) (compound_statement))
+ (function_decl
+  (attribute (identifier))
+  (attribute (identifier) (int_literal) (int_literal))
+  (identifier)
+  (param_list
+   (param (attribute (identifier) (identifier))
+	  (identifier) (template_ident (identifier))))
+  (compound_statement)))

@@ -39,6 +39,7 @@ module.exports = grammar({
 
     inline: $ => [
 	$._literal,
+	$._variable_or_value_statement,
     ],
 
     conflicts: $ => [
@@ -117,7 +118,12 @@ module.exports = grammar({
 	// $4.1.2
 	requires_directive: $ => seq('requires', commaSep1($.identifier), ';'),
 	// $4.2
-	diagnostic_directive: $ => seq('diagnostic', $._diagnostic_control, ';'),
+	diagnostic_directive: $ => seq(
+	    'diagnostic', '(',
+	    choice('error', 'warning', 'info', 'off'), ',',
+	    seq($.identifier, optional(seq('.', $.identifier))),
+	    optional(','), ')', ";",
+	),
 	// $6.2.10
 	struct_decl: $ => seq(
 	    'struct',
@@ -242,14 +248,14 @@ module.exports = grammar({
 		token(choice(
 		    '=', '+=', '-=', '*=',
 		    '/=', '%=', '&=', '|=',
-		    '^=', '<<=', '>>=')),
+		    '^=', '<<=', '>>=',
+		)),
 		field('right', $._expression),
 	    ),
 	    seq(field('left', '_'), '=', field('right', $._expression)),
         ),
 	//$9.3
-	increment_statement: $ => seq($._expression, '++'),
-        decrement_statement: $ => seq($._expression, '--'),
+	update_statement: $ => seq($._expression, choice('++', '--')),
 	//$9.4.1
 	if_statement: $ => seq(
 	    repeat($.attribute),
@@ -296,14 +302,16 @@ module.exports = grammar({
         for_header: $ => seq(
 	    optional(choice(
 		$._variable_or_value_statement,
-		$._variable_updating_statement,
+		$.update_statement,
+		$.assignment_statement,
 		$.func_call_statement,
 	    )),
 	    ';',
 	    optional($._expression),
 	    ';',
 	    optional(choice(
-		$._variable_updating_statement,
+		$.update_statement,
+		$.assignment_statement,
 		$.func_call_statement,
 	    )),
 	),
@@ -336,26 +344,22 @@ module.exports = grammar({
 	//$9.7
 	_statement: $ => choice(
 	    ';',
-            seq($.return_statement, ';'),
+	    $.compound_statement,
             $.if_statement,
             $.switch_statement,
             $.loop_statement,
             $.for_statement,
             $.while_statement,
+	    seq($.return_statement, ';'),
             seq($.func_call_statement, ';'),
             seq($._variable_or_value_statement, ';'),
             seq($.break_statement, ';'),
             seq($.continue_statement, ';'),
             seq('discard', ';'),
-            seq($._variable_updating_statement, ';'),
-            $.compound_statement,
+	    seq($.assignment_statement, ';'),
+	    seq($.update_statement, ';'),
             seq($.const_assert_statement, ';'),
         ),
-	_variable_updating_statement: $ => choice(
-	    $.assignment_statement,
-	    $.increment_statement,
-	    $.decrement_statement,
-	),
 	//$10.1
 	function_decl: $ => seq(
 	    repeat($.attribute),
@@ -377,40 +381,9 @@ module.exports = grammar({
 	    $._type_specifier,
 	),
 	//$11
-	attribute: $ => choice(
-	    seq('@', 'align', '(', $._expression, $._attrib_end),
-	    seq('@', 'binding', '(', $._expression, $._attrib_end),
-	    seq('@', 'builtin', '(', $._expression, $._attrib_end),
-	    seq('@', 'const'),
-	    seq('@', 'diagnostic', $._diagnostic_control),
-	    seq('@', 'group', '(', $._expression, $._attrib_end),
-	    seq('@', 'id', '(', $._expression, $._attrib_end),
-	    seq('@', 'interpolate', '(', $._expression, $._attrib_end),
-	    seq('@', 'interpolate', '(', $._expression,
-		',', $._expression, $._attrib_end),
-	    seq('@', 'invariant'),
-	    seq('@', 'location', '(', $._expression, $._attrib_end),
-	    seq('@', 'must_use'),
-	    seq('@', 'size', '(', $._expression, $._attrib_end),
-	    seq('@', 'workgroup_size', '(', $._expression, $._attrib_end),
-	    seq('@', 'workgroup_size', '(',
-		$._expression, ',', $._expression, $._attrib_end),
-	    seq('@', 'workgroup_size', '(',
-		$._expression, ',', $._expression, ',', $._expression, $._attrib_end),
-	    seq('@', 'vertex'),
-	    seq('@', 'fragment'),
-	    seq('@', 'compute'),
-	),
-	// When wrap _attrib_end with token(), parser.c's size
-	// increases about 50KB. Maybe it causes some inline
-	// optimization
-	_attrib_end: $ => seq(optional(','), ')'),
-	_diagnostic_control: $ => seq(
-	    '(',
-	    field('level', choice('error', 'warning', 'info', 'off')),
-	    ',',
-	    field('name', seq($.identifier, optional(seq('.', $.identifier)))),
-	    $._attrib_end,
+	attribute: $ => seq(
+	    '@', $.identifier,
+	    optional(seq('(', commaSep1($._expression), ')')),
 	),
     }
 })

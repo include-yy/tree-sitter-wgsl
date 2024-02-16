@@ -4,18 +4,21 @@
  * @license MIT
  */
 
+
 const PREC = {
-    LOGICAL_OR: 1,
-    LOGICAL_AND: 2,
-    INCLUSIVE_OR: 3,
-    EXCLUSIVE_OR: 4,
-    BITWISE_AND: 5,
-    EQUAL: 6,
-    RELATIONAL: 7,
-    SHIFT: 9,
-    ADD: 10,
-    MULTIPLY: 11,
-    UNARY: 14,
+    //call: 15,
+    //field: 14,
+    unary: 11,
+    mul: 10,
+    add: 9,
+    shift : 8,
+    cmp : 7,
+    equal: 6,
+    bitand: 5,
+    bitxor: 4,
+    bitor: 3,
+    and : 2,
+    or : 1,
 }
 
 module.exports = grammar({
@@ -193,14 +196,14 @@ module.exports = grammar({
 	),
 	argument_expression_list: $ => seq('(', commaSep($._expression), ')'),
 	paren_expression: $ => seq('(', $._expression, ')'),
-	component_or_swizzle_specifier: $ => prec.left(PREC.UNARY, seq(
+	component_or_swizzle_specifier: $ => prec.left(PREC.unary, seq(
 	    choice(
 		field('index', seq('[', $._expression, ']')),
 		field('field', seq('.', $.identifier)),
 	    ),
 	    optional($.component_or_swizzle_specifier),
 	)),
-	unary_expression: $ => prec.left(PREC.UNARY,
+	unary_expression: $ => prec.left(PREC.unary,
 	    seq(
 		field('operator', token(choice('-', '!', '~', '*', '&'))),
 		field('argument', $._expression),
@@ -217,24 +220,24 @@ module.exports = grammar({
 	),
 	binary_expression: $ => {
 	    const table = [
-		['||', PREC.LOGICAL_OR],
-		['&&', PREC.LOGICAL_AND],
-		['|', PREC.INCLUSIVE_OR],
-		['^', PREC.EXCLUSIVE_OR],
-		['&', PREC.BITWISE_AND],
-		['==', PREC.EQUAL],
-		['!=', PREC.EQUAL],
-		['<', PREC.RELATIONAL],
-		['>', PREC.RELATIONAL],
-		['<=', PREC.RELATIONAL],
-		['>=', PREC.RELATIONAL],
-		['<<', PREC.SHIFT],
-		['>>', PREC.SHIFT],
-		['+', PREC.ADD],
-		['-', PREC.ADD],
-		['*', PREC.MULTIPLY],
-		['/', PREC.MULTIPLY],
-		['%', PREC.MULTIPLY],
+		['||', PREC.or],
+		['&&', PREC.and],
+		['|', PREC.bitor],
+		['^', PREC.bitxor],
+		['&', PREC.bitand],
+		['==', PREC.equal],
+		['!=', PREC.equal],
+		['<', PREC.cmp],
+		['>', PREC.cmp],
+		['<=', PREC.cmp],
+		['>=', PREC.cmp],
+		['<<', PREC.shift],
+		['>>', PREC.shift],
+		['+', PREC.add],
+		['-', PREC.add],
+		['*', PREC.mul],
+		['/', PREC.mul],
+		['%', PREC.mul],
 	    ];
 	    return choice(...table.map(([operator, precedence]) => {
 		return prec.left(precedence, seq(

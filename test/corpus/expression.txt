@@ -1,0 +1,155 @@
+=========================
+template_list expression0
+=========================
+
+const a = vec3<f32>;
+const a = array<vec4<f32>>;
+const a = array<vec4<f32> >;
+const a = a<b, (1.0>2.0)>;
+const a = A ( B < C, D > ( E ));
+const a = A ( B < C, D > E);
+const a = array<i32,select(2,3,a>b)>;
+const a = A<B<<C>;
+const a = A<B<=C>;
+const a = A<(B>=C)>;
+const a = A<(B!=C)>;
+const a = A<(B==C)>;
+const a = A<1.0f<2.0>;
+
+-------------------------
+
+(translation_unit
+ (global_const_decl
+  (identifier)
+  (template_ident
+   (identifier)
+   (template_list
+    (template_ident
+     (identifier)))))
+ (global_const_decl
+  (identifier)
+  (template_ident
+   (identifier)
+   (template_list
+    (template_ident
+     (identifier)
+     (template_list
+      (template_ident
+       (identifier)))))))
+ (global_const_decl
+  (identifier)
+  (template_ident
+   (identifier)
+   (template_list
+    (template_ident
+     (identifier)
+     (template_list
+      (template_ident
+       (identifier)))))))
+ (global_const_decl
+  (identifier)
+  (template_ident
+   (identifier)
+   (template_list
+    (template_ident
+     (identifier))
+    (paren_expression
+     (binary_expression
+      (float_literal)
+      (float_literal))))))
+ (global_const_decl
+  (identifier)
+  (call_expression
+   (template_ident
+    (identifier))
+   (argument_expression_list
+    (call_expression
+     (template_ident
+      (identifier)
+      (template_list
+       (template_ident
+        (identifier))
+       (template_ident
+        (identifier))))
+     (argument_expression_list
+      (identifier))))))
+ (global_const_decl
+  (identifier)
+  (call_expression
+   (template_ident
+    (identifier))
+   (argument_expression_list
+    (binary_expression
+     (identifier)
+     (identifier))
+    (binary_expression
+     (identifier)
+     (identifier)))))
+ (global_const_decl
+  (identifier)
+  (template_ident
+   (identifier)
+   (template_list
+    (template_ident
+     (identifier))
+    (call_expression
+     (template_ident
+      (identifier))
+     (argument_expression_list
+      (int_literal)
+      (int_literal)
+      (binary_expression
+       (identifier)
+       (identifier)))))))
+ (global_const_decl
+  (identifier)
+  (template_ident
+   (identifier)
+   (template_list
+    (binary_expression
+     (identifier)
+     (identifier)))))
+ (global_const_decl
+  (identifier)
+  (template_ident
+   (identifier)
+   (template_list
+    (binary_expression
+     (identifier)
+     (identifier)))))
+ (global_const_decl
+  (identifier)
+  (template_ident
+   (identifier)
+   (template_list
+    (paren_expression
+     (binary_expression
+      (identifier)
+      (identifier))))))
+ (global_const_decl
+  (identifier)
+  (template_ident
+   (identifier)
+   (template_list
+    (paren_expression
+     (binary_expression
+      (identifier)
+      (identifier))))))
+ (global_const_decl
+  (identifier)
+  (template_ident
+   (identifier)
+   (template_list
+    (paren_expression
+     (binary_expression
+      (identifier)
+      (identifier))))))
+ (global_const_decl
+  (identifier)
+  (template_ident
+   (identifier)
+   (template_list
+    (binary_expression
+     (float_literal)
+     (float_literal))))))
+

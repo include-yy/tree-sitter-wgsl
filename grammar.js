@@ -268,15 +268,18 @@ module.exports = grammar({
 	    repeat($.attribute),
 	    'switch',
 	    $._expression,
+	    $.switch_body,
+	),
+	switch_body: $ => seq(
 	    repeat($.attribute),
 	    '{',
-	    repeat1($.switch_clause),
+	    repeat1(choice($.case_clause, $.default_alone_clause)),
 	    '}',
 	),
-	switch_clause: $ => choice(
-	    seq('case', $.case_selectors, optional(':'), $.compound_statement),
-	    seq('default', optional(':'), $.compound_statement),
+	case_clause: $ => seq(
+	    'case', $.case_selectors, optional(':'), $.compound_statement,
 	),
+	default_alone_clause: $ => seq('default', optional(':'), $.compound_statement),
 	case_selectors: $ => commaSep1(choice('default', $._expression)),
 	//$9.4.3
 	loop_statement: $ => seq(
@@ -333,6 +336,8 @@ module.exports = grammar({
 	),
 	//$9.4.10
 	return_statement: $ => seq('return', optional($._expression)),
+	//$9.4.11
+	discard_statement: $ => 'discard',
 	//$9.5
         func_call_statement: $ => $.call_expression,
 	//$9.6
@@ -352,7 +357,7 @@ module.exports = grammar({
 	    seq($.value_statement, ';'),
             seq($.break_statement, ';'),
             seq($.continue_statement, ';'),
-            seq('discard', ';'),
+	    seq($.discard_statement, ';'),
 	    seq($.assignment_statement, ';'),
 	    seq($.update_statement, ';'),
             seq($.const_assert_statement, ';'),

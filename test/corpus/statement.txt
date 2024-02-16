@@ -1,0 +1,455 @@
+=============================
+compound_statement statement0
+=============================
+
+fn main() {
+{{{{{{}}}}}}
+}
+
+-----------------------------
+
+(translation_unit
+ (function_decl
+  (identifier)
+  (compound_statement
+   (compound_statement
+    (compound_statement
+     (compound_statement
+      (compound_statement
+       (compound_statement
+        (compound_statement)))))))))
+
+===============================
+assignment_statement statement0
+===============================
+
+fn main() {
+a = b;
+_ = true;
+a[b].c += d.e[f];
+(a)[b][c].d >>= (1 / d[2]);
+*uv_x_ptr = 2.5;
+_ = increment_and_yield_previous();
+data[advance_item()] += 5.0;
+}
+
+------------------------------
+
+(translation_unit
+ (function_decl
+  (identifier)
+  (compound_statement
+   (assignment_statement
+    (identifier)
+    (identifier))
+   (assignment_statement
+    (bool_literal))
+   (assignment_statement
+    (field_expression
+     (index_expression
+      (identifier)
+      (identifier))
+     (identifier))
+    (index_expression
+     (field_expression
+      (identifier)
+      (identifier))
+     (identifier)))
+   (assignment_statement
+    (field_expression
+     (index_expression
+      (index_expression
+       (paren_expression
+        (identifier))
+       (identifier))
+      (identifier))
+     (identifier))
+    (paren_expression
+     (binary_expression
+      (int_literal)
+      (index_expression
+       (identifier)
+       (int_literal)))))
+   (assignment_statement
+    (unary_expression
+     (identifier))
+    (float_literal))
+   (assignment_statement
+    (call_expression
+     (template_ident
+      (identifier))
+     (argument_expression_list)))
+   (assignment_statement
+    (index_expression
+     (identifier)
+     (call_expression
+      (template_ident
+       (identifier))
+      (argument_expression_list)))
+    (float_literal)))))
+
+===========================
+update_statement statement0
+===========================
+
+fn main() {
+c++;
+a[0]--;
+b.c++;
+c.d[e]--;
+}
+
+---------------------------
+
+(translation_unit
+ (function_decl
+  (identifier)
+  (compound_statement
+   (update_statement
+    (identifier))
+   (update_statement
+    (index_expression
+     (identifier)
+     (int_literal)))
+   (update_statement
+    (field_expression
+     (identifier)
+     (identifier)))
+   (update_statement
+    (index_expression
+     (field_expression
+      (identifier)
+      (identifier))
+     (identifier))))))
+
+=======================
+if_statement statement0
+=======================
+
+fn main() {
+if true {} else if flase {} else if a || b {} else {}
+if a && b {if b && c {if c && d {}}}
+}
+
+---------------------------
+
+(translation_unit
+ (function_decl
+  (identifier)
+  (compound_statement
+   (if_statement
+    (bool_literal)
+    (compound_statement)
+    (else_statement
+     (if_statement
+      (identifier)
+      (compound_statement)
+      (else_statement
+       (if_statement
+        (binary_expression
+         (identifier)
+         (identifier))
+        (compound_statement)
+        (else_statement
+         (compound_statement)))))))
+   (if_statement
+    (binary_expression
+     (identifier)
+     (identifier))
+    (compound_statement
+     (if_statement
+      (binary_expression
+       (identifier)
+       (identifier))
+      (compound_statement
+       (if_statement
+        (binary_expression
+         (identifier)
+         (identifier))
+        (compound_statement)))))))))
+
+===========================
+switch_statement statement0
+===========================
+
+fn main() {
+switch x {
+  case 0: {
+    a = 1;
+  }
+  default {
+    a = 2;
+  }
+  case 1, 2, {
+    a = 3;
+  }
+  case 3, {
+    a = 4;
+  }
+  case 4 {
+    a = 5;
+  }
+}
+switch x {
+  case 0: {
+    a = 1;
+  }
+  case 1, c {
+    a = 3;
+  }
+  case 3, default {
+    a = 4;
+  }
+}
+}
+
+-----------------------------------
+
+(translation_unit
+ (function_decl
+  (identifier)
+  (compound_statement
+   (switch_statement
+    (identifier)
+    (switch_body
+     (case_clause
+      (case_selectors
+       (int_literal))
+      (compound_statement
+       (assignment_statement
+        (identifier)
+        (int_literal))))
+     (default_alone_clause
+       (compound_statement
+        (assignment_statement
+         (identifier)
+         (int_literal))))
+     (case_clause
+      (case_selectors
+       (int_literal)
+       (int_literal))
+      (compound_statement
+       (assignment_statement
+        (identifier)
+        (int_literal))))
+     (case_clause
+      (case_selectors
+       (int_literal))
+      (compound_statement
+       (assignment_statement
+        (identifier)
+        (int_literal))))
+     (case_clause
+      (case_selectors
+       (int_literal))
+      (compound_statement
+       (assignment_statement
+        (identifier)
+        (int_literal))))))
+   (switch_statement
+    (identifier)
+    (switch_body
+     (case_clause
+      (case_selectors
+       (int_literal))
+      (compound_statement
+       (assignment_statement
+        (identifier)
+        (int_literal))))
+     (case_clause
+      (case_selectors
+       (int_literal)
+       (identifier))
+      (compound_statement
+       (assignment_statement
+        (identifier)
+        (int_literal))))
+     (case_clause
+      (case_selectors
+       (int_literal))
+      (compound_statement
+       (assignment_statement
+        (identifier)
+        (int_literal)))))))))
+
+=========================
+loop_statement statement0
+=========================
+
+fn main(){
+loop {
+  if i >= 4 { break; }
+
+  a = a * 2;
+
+  i++;
+}
+
+loop {
+  if i >= 4 { break; }
+
+  let step: i32 = 1;
+
+  i = i + step;
+  if i % 2 == 0 { continue; }
+
+  a = a * 2;
+}
+
+loop {
+  if i >= 4 { break; }
+
+  let step: i32 = 1;
+
+  if i % 2 == 0 { continue; }
+
+  a = a * 2;
+
+  continuing {
+    i = i + step;
+  }
+}
+}
+
+--------------------------------------------
+
+(translation_unit
+ (function_decl
+  (identifier)
+  (compound_statement
+   (loop_statement
+    (if_statement
+     (binary_expression
+      (identifier)
+      (int_literal))
+     (compound_statement
+      (break_statement)))
+    (assignment_statement
+     (identifier)
+     (binary_expression
+      (identifier)
+      (int_literal)))
+    (update_statement
+     (identifier)))
+   (loop_statement
+    (if_statement
+     (binary_expression
+      (identifier)
+      (int_literal))
+     (compound_statement
+      (break_statement)))
+    (value_statement
+     (identifier)
+     (template_ident
+      (identifier))
+     (int_literal))
+    (assignment_statement
+     (identifier)
+     (binary_expression
+      (identifier)
+      (identifier)))
+    (if_statement
+     (binary_expression
+      (binary_expression
+       (identifier)
+       (int_literal))
+      (int_literal))
+     (compound_statement
+      (continue_statement)))
+    (assignment_statement
+     (identifier)
+     (binary_expression
+      (identifier)
+      (int_literal))))
+   (loop_statement
+    (if_statement
+     (binary_expression
+      (identifier)
+      (int_literal))
+     (compound_statement
+      (break_statement)))
+    (value_statement
+     (identifier)
+     (template_ident
+      (identifier))
+     (int_literal))
+    (if_statement
+     (binary_expression
+      (binary_expression
+       (identifier)
+       (int_literal))
+      (int_literal))
+     (compound_statement
+      (continue_statement)))
+    (assignment_statement
+     (identifier)
+     (binary_expression
+      (identifier)
+      (int_literal)))
+    (continuing_statement
+     (continuing_compound_statement
+      (assignment_statement
+       (identifier)
+       (binary_expression
+        (identifier)
+        (identifier)))))))))
+
+========================
+for_statement statement0
+========================
+
+fn main() {
+for (var i: i32 = 0; i < 4; i++) {
+  if a == 0 {
+    continue;
+  }
+  a = a + 2;
+}
+}
+
+---------------------------
+
+(translation_unit
+ (function_decl
+  (identifier)
+  (compound_statement
+   (for_statement
+    (for_header
+     (variable_statement
+      (identifier)
+      (template_ident
+       (identifier))
+      (int_literal))
+     (binary_expression
+      (identifier)
+      (int_literal))
+     (update_statement
+      (identifier)))
+    (compound_statement
+     (if_statement
+      (binary_expression
+       (identifier)
+       (int_literal))
+      (compound_statement
+       (continue_statement)))
+     (assignment_statement
+      (identifier)
+      (binary_expression
+       (identifier)
+       (int_literal))))))))
+
+============================
+discard_statement statement0
+============================
+
+fn main() {
+discard;
+}
+
+--------------------
+
+(translation_unit
+ (function_decl
+  (identifier)
+  (compound_statement
+   (discard_statement))))

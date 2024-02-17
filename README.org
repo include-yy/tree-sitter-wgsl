@@ -4,6 +4,9 @@
 
 inspired and guided by [[https://github.com/szebniok/tree-sitter-wgsl][szebniok/tree-sitter-wgsl]] and [[https://github.com/tree-sitter/tree-sitter-rust][tree-sitter-rust]].
 
+#+ATTR_HTML: :style text-align: right;
+[[./assets/webgpu.svg]]
+
 ** About
 
 At first, what is WGSL, and what is tree-sitter?

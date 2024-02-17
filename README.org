@@ -94,7 +94,8 @@ Finished:
 
 TODO:
 
+- [ ] improve parser's state count and parser's size
+- [ ] adjust code order and comments for easier understanding
 - [ ] provide fully covered test
 - [ ] add more examples
 - [ ] add hightlight.scm (but I am not a nvim user)
-- [ ] improve parser's state count and parser's size

@@ -2,7 +2,7 @@
 
 [[https://www.w3.org/TR/2024/WD-WGSL-20240205/][WebGPU Shading Language WD-WGSL-20240205]] grammar for [[https://tree-sitter.github.io/tree-sitter/][tree-sitter]].
 
-inspired and guided by [[https://github.com/szebniok/tree-sitter-wgsl][szebniok/tree-sitter-wgsl]].
+inspired and guided by [[https://github.com/szebniok/tree-sitter-wgsl][szebniok/tree-sitter-wgsl]] and [[https://github.com/tree-sitter/tree-sitter-rust][tree-sitter-rust]].
 
 ** About
 
@@ -28,7 +28,7 @@ source file. The generated parser can then be used with emacs's
 builtin [[https://www.gnu.org/software/emacs/manual/html_node/elisp/Parsing-Program-Source.html][treesit]] support to provide better major mode experience and
 more convenient emacs addons development experience.
 
-Currently this grammar is far from mature, ToDo list below shows
+Currently this grammar is not mature enough, ToDo list below shows
 things need to be done.
 
 ** Get and Use
@@ -65,14 +65,34 @@ in =src= directory:
 
 issue and pr are welcomed. Whether it's correcting mistakes,
 synchronizing with the latest standards, or pointing out errors in the
-grammar, all are acceptable.If you wish to submit a pull request,
+grammar, all are acceptable. If you wish to submit a pull request,
 please make sure it passes all tests under test/corpus (of course, you
 may modify the test files as needed).
 
+Here are some learning materials about writing grammars:
+
+- [[https://tree-sitter.github.io/tree-sitter/][Tree-sitter official documentation]]
+- [[https://github.com/tree-sitter/tree-sitter/wiki/Tips-and-Tricks-for-a-grammar-author][Tips and Tricks for a grammar author]]
+- [[https://github.com/sogaiu/ts-questions][sogaiu/ts-questions: Tree-sitter Questions]]
+- repo's [[https://github.com/tree-sitter/tree-sitter/issues][issues]], [[https://github.com/tree-sitter/tree-sitter/pulls][pulls]] and [[https://github.com/tree-sitter/tree-sitter/discussions][discussions]]
+- [[https://docs.rs/tree-sitter/0.20.10/tree_sitter/][tree_sitter - Rust]]
+
+Also something from emacs side:
+
+- [[https://www.gnu.org/software/emacs/manual/html_node/elisp/Parsing-Program-Source.html][Parsing Program Source(GNU Emacs Lisp Reference Manual)]]
+- [[https://github.com/emacs-mirror/emacs/blob/master/admin/notes/tree-sitter/starter-guide][emacs/admin/notes/tree-sitter/starter-guide]]
+
 ** ToDo List
 
-- [X] add more test cases
-  Currently there are just simple test files for literal, comment and directive
-- [X] rename some unconvenient name, such as =template_elaborated_ident= and =component_or_swizzle_specifier=
+Finished:
+
+- [X] add basic test files for grammar
+- [X] rename some unconvenient name
+- [X] use code in WGSL's spec as example
+
+TODO:
+
+- [ ] provide fully covered test
 - [ ] add more examples
-- [ ] add hightlight.scm(but I am not a nvim user)
+- [ ] add hightlight.scm (but I am not a nvim user)
+- [ ] improve parser's state count and parser's size

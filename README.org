@@ -1,11 +1,10 @@
 * tree-sitter-wgsl
 
+#+HTML: <img src="./assets/webgpu.svg" align="right" width="30%">
+
 [[https://www.w3.org/TR/2024/WD-WGSL-20240205/][WebGPU Shading Language WD-WGSL-20240205]] grammar for [[https://tree-sitter.github.io/tree-sitter/][tree-sitter]].
 
 inspired and guided by [[https://github.com/szebniok/tree-sitter-wgsl][szebniok/tree-sitter-wgsl]] and [[https://github.com/tree-sitter/tree-sitter-rust][tree-sitter-rust]].
-
-#+ATTR_HTML: :style text-align: right;
-[[./assets/webgpu.svg]]
 
 ** About
 

@@ -55,7 +55,8 @@ module.exports = grammar({
 	_global_decl: $ => choice(
 	    ';',
 	    seq($.global_variable_decl, ';'),
-	    seq($._global_value_decl, ';'),
+	    seq($.global_const_decl, ';'),
+	    seq($.global_override_decl, ';'),
 	    seq($.type_alias_decl, ';'),
 	    seq($.const_assert_statement, ';'),
 	    $.struct_decl,
@@ -168,10 +169,6 @@ module.exports = grammar({
 	    repeat($.attribute),
 	    $._variable_decl,
 	    optional($._declaration_value),
-	),
-	_global_value_decl: $ => choice(
-	    $.global_const_decl,
-	    $.global_override_decl,
 	),
 	global_const_decl: $ => seq(
 	    'const',

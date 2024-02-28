@@ -72,7 +72,9 @@ module.exports = grammar({
 	    $.bool_literal,
 	),
 	// $3.5.1
-	bool_literal: $ => token(choice('true', 'false')),
+	// maybe we can use token here, it can reduce parser.c's size
+	// about 10KB
+	bool_literal: $ => choice('true', 'false'),
 	// $3.5.2
 	int_literal: $ => token(choice(
 	    /0[iu]?/,
@@ -273,7 +275,10 @@ module.exports = grammar({
 	switch_body: $ => seq(
 	    repeat($.attribute),
 	    '{',
-	    repeat1(choice($.case_clause, $.default_alone_clause)),
+	    repeat1(choice(
+		$.case_clause,
+		$.default_alone_clause,
+	    )),
 	    '}',
 	),
 	case_clause: $ => seq(

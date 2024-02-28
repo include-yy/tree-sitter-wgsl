@@ -1,6 +1,6 @@
-============
-bool literal
-============
+=============
+bool literal0
+=============
 
 const a = true;
 const a = false;
@@ -10,9 +10,9 @@ const a = false;
  (global_const_decl (identifier) (bool_literal))
  (global_const_decl (identifier) (bool_literal)))
 
-===========
-int literal
-===========
+============
+int literal0
+============
 
 const a = 0;
 const a = 0i;
@@ -37,9 +37,9 @@ const a = 0x0114514;
  (global_const_decl (identifier) (int_literal))
  (global_const_decl (identifier) (int_literal)))
 
-=============
-float literal
-=============
+==============
+float literal0
+==============
 
 const a = 0.e+4f;
 const b = 01.;

@@ -1,6 +1,6 @@
-================
-enable directive
-================
+=================
+enable directive0
+=================
 
 enable arbitrary_precision_float;
 enable arbitrary_precision_float;
@@ -15,9 +15,9 @@ enable arbitrary_precision_float, rounding_mode;
  (enable_directive (identifier))
  (enable_directive (identifier) (identifier)))
 
-==================
-requires directive
-==================
+===================
+requires directive0
+===================
 
 requires readonly_and_readwrite_storage_textures;
 requires packed_4x8_integer_dot_product;
@@ -35,9 +35,9 @@ requires a,b,c,d;
  (requires_directive (identifier) (identifier)
 		     (identifier) (identifier)))
 
-====================
-diagnostic directive
-====================
+=====================
+diagnostic directive0
+=====================
 
 diagnostic (error, a.b);
 diagnostic (warning, hello);

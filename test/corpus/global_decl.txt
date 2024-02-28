@@ -1,6 +1,6 @@
-===========================
-type_alias_decl global_decl
-===========================
+============================
+type_alias_decl global_decl0
+============================
 
 alias a = vec4<f32>;
 alias RTArr = array<vec4<f32>>;
@@ -39,9 +39,9 @@ alias single = f32;
   (template_ident
    (identifier))))
 
-=====================
-semicolon global_decl
-=====================
+======================
+semicolon global_decl0
+======================
 
 ;;
 ;;;
@@ -52,9 +52,9 @@ semicolon global_decl
 
 (translation_unit)
 
-=============================
-global_value_decl global_decl
-=============================
+==============================
+global_value_decl global_decl0
+==============================
 
 const a = 1u;
 const b = 2.0f;
@@ -86,9 +86,9 @@ override height = 2 * depth;
  (global_override_decl (identifier) (template_ident (identifier)))
  (global_override_decl (identifier) (binary_expression (int_literal) (identifier))))
 
-================================
-global_variable_decl global_decl
-================================
+=================================
+global_variable_decl global_decl0
+=================================
 
 @group(0) @binding(0)
 var<storage,read> buf1: Buffer;
@@ -152,9 +152,9 @@ var<private> c: array<i32,8u>;
    (identifier) (template_list (template_ident (identifier))
 			       (int_literal)))))
 
-==================================
-const_assert_statement global_decl
-==================================
+===================================
+const_assert_statement global_decl0
+===================================
 
 const_assert x < y;
 const_assert(y != 0);
@@ -170,9 +170,9 @@ const_assert a != 0;
  (const_assert_statement (binary_expression (identifier) (int_literal)))
  (const_assert_statement (binary_expression (identifier) (int_literal))))
 
-=======================
-struct_decl global_decl
-=======================
+========================
+struct_decl global_decl0
+========================
 
 struct PointLight {
   position : vec3f,
@@ -222,9 +222,9 @@ struct ParamsTable {@id(1) weight: f32}
   (struct_member (attribute (identifier) (int_literal))
   		 (identifier) (template_ident (identifier)))))
 
-=========================
-function_decl global_decl
-=========================
+==========================
+function_decl global_decl0
+==========================
 
 fn add_two(i: i32, b: f32) -> i32 {}
 @fragment

@@ -126,7 +126,7 @@ module.exports = grammar({
 	// $6.2.10
 	struct_decl: $ => seq(
 	    'struct',
-	    field('name', $.identifier),
+	    $.identifier,
 	    '{',
 	    commaSep1($.struct_member),
 	    '}',
@@ -145,40 +145,44 @@ module.exports = grammar({
 	    field('arguments', optional($.template_list)),
 	),
 	// $7.4
-	variable_statement: $ => seq(
-	    $._variable_decl,
-	    optional(seq('=', field('value', $._expression)))
+	_optionally_typed_ident: $ => seq(
+	    field('name', $.identifier),
+	    optional(seq(':', field('type', $.template_ident))),
 	),
-	value_statement: $ => seq(
-	    choice('let', 'const'),
-	    $._optionally_typed_ident,
-	    '=', field('value', $._expression),
-	),
+	_declaration_value: $ => seq('=', field('value', $._expression)),
 	_variable_decl: $ => seq(
 	    'var',
 	    field('reftype', optional($.template_list)),
 	    $._optionally_typed_ident,
 	),
-	_optionally_typed_ident: $ => seq(
-	    field('name', $.identifier),
-	    optional(seq(':', field('type', $.template_ident)))),
+	variable_statement: $ => seq(
+	    $._variable_decl,
+	    optional($._declaration_value),
+	),
+	value_statement: $ => seq(
+	    choice('let', 'const'),
+	    $._optionally_typed_ident,
+	    $._declaration_value,
+	),
 	global_variable_decl: $ => seq(
 	    repeat($.attribute),
 	    $._variable_decl,
-	    optional(seq('=', field('value', $._expression))),
+	    optional($._declaration_value),
 	),
 	_global_value_decl: $ => choice(
 	    $.global_const_decl,
 	    $.global_override_decl,
 	),
 	global_const_decl: $ => seq(
-	    'const', $._optionally_typed_ident,
-	    '=', field('value', $._expression)),
+	    'const',
+	    $._optionally_typed_ident,
+	    $._declaration_value,
+	),
 	global_override_decl: $ => seq(
 	    repeat($.attribute),
 	    'override',
 	    $._optionally_typed_ident,
-	    optional(seq('=', field('value', $._expression)))),
+	    optional($._declaration_value)),
 	// $8.18
 	_expression: $ => choice(
 	    $.identifier,

@@ -72,7 +72,7 @@ module.exports = grammar({
 	    $.bool_literal,
 	),
 	// $3.5.1
-	bool_literal: $ => choice('true', 'false'),
+	bool_literal: $ => token(choice('true', 'false')),
 	// $3.5.2
 	int_literal: $ => token(choice(
 	    /0[iu]?/,
@@ -367,13 +367,8 @@ module.exports = grammar({
 	    repeat($.attribute),
 	    'fn',
 	    field('name', $.identifier),
-	    '(',
-	    field('parameters', optional($.param_list)),
-	    ')',
-	    optional(seq(
-		'->', repeat($.attribute),
-		field('type', $.template_ident),
-	    )),
+	    $._func_parameters,
+	    optional($._func_return_type),
 	    field('body', $.compound_statement),
 	),
         param_list: $ => commaSep1($.param),
@@ -381,6 +376,15 @@ module.exports = grammar({
 	    repeat($.attribute),
 	    $.identifier, ':',
 	    $.template_ident,
+	),
+	_func_parameters: $ => seq(
+	    '(',
+	    field('parameters', optional($.param_list)),
+	    ')',
+	),
+	_func_return_type: $ => seq(
+	    '->', repeat($.attribute),
+	    field('type', $.template_ident),
 	),
 	//$11
 	attribute: $ => seq(

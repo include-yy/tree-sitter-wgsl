@@ -43,7 +43,7 @@ module.exports = grammar({
 
     conflicts: $ => [
 	[$.template_ident, $._expression],
-	[$._type_specifier, $._expression],
+	[$.template_list, $._expression],
     ],
 
     rules: {
@@ -101,7 +101,7 @@ module.exports = grammar({
 	template_list: $ => seq(
 	    '<',
 	    commaSep1(choice(
-		prec.dynamic(2, $._type_specifier),
+		prec.dynamic(2, $.template_ident),
 		prec.dynamic(1, $._expression),
 	    )),
 	    alias(token(prec(1, '>')), '>'),
@@ -135,12 +135,11 @@ module.exports = grammar({
 	    repeat($.attribute),
 	    field('name', $.identifier),
 	    ':',
-	    field('type', $._type_specifier),
+	    field('type', $.template_ident),
 	),
 	// $6.7
-	type_alias_decl: $ => seq('alias', $.identifier, '=', $._type_specifier),
+	type_alias_decl: $ => seq('alias', $.identifier, '=', $.template_ident),
 	// $6.8
-	_type_specifier: $ => $.template_ident,
 	template_ident: $ => seq(
 	    field('name', $.identifier),
 	    field('arguments', optional($.template_list)),
@@ -162,7 +161,7 @@ module.exports = grammar({
 	),
 	_optionally_typed_ident: $ => seq(
 	    field('name', $.identifier),
-	    optional(seq(':', field('type', $._type_specifier)))),
+	    optional(seq(':', field('type', $.template_ident)))),
 	global_variable_decl: $ => seq(
 	    repeat($.attribute),
 	    $._variable_decl,
@@ -380,7 +379,7 @@ module.exports = grammar({
 	param: $ => seq(
 	    repeat($.attribute),
 	    $.identifier, ':',
-	    $._type_specifier,
+	    $.template_ident,
 	),
 	//$11
 	attribute: $ => seq(
